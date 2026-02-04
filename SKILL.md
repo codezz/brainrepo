@@ -2,7 +2,7 @@
 name: brainrepo
 description: >
   Your personal knowledge repository — capture, organize, and retrieve everything using PARA + Zettelkasten.
-  Triggers on: "save this", "remember", "note", "capture", "brain dump", "salvează", "notează", daily/weekly
+  Triggers on: "save this", "remember", "note", "capture", "brain dump", daily/weekly
   reviews, searching stored knowledge, managing projects/areas/people. Works with any AI agent that reads
   markdown. Stores everything as .md files in a Git repo for Obsidian, VS Code, or any editor.
 ---
