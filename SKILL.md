@@ -11,15 +11,28 @@ description: >
 
 Your personal knowledge repository. Capture fast, organize automatically, retrieve instantly.
 
-## Quick Start
+## Onboarding
+
+When user says "set up brainrepo", "initialize my brain", or similar:
+
+1. Ask where to create the brain (default: `~/brainrepo` or `./brain`)
+2. Create the folder structure:
 
 ```bash
-# Clone the structure into your vault
-git clone https://github.com/codezz/brainrepo.git my-brain
-cd my-brain
+mkdir -p <path>/{Inbox,Projects,Areas/personal-growth,Areas/family,Notes,Resources,Journal,People,Tasks,Archive}
 ```
 
-Then tell your AI: "Set up brainrepo for me" or just start dumping: "Save this: [your thought]"
+3. Create initial files from templates in `assets/templates/`:
+   - `Tasks/index.md` — task hub
+   - `Areas/personal-growth/index.md` — personal growth area
+   - `Areas/family/index.md` — family area
+
+4. Initialize git (optional):
+```bash
+cd <path> && git init && git add -A && git commit -m "init: brainrepo"
+```
+
+5. Confirm setup and show quick start commands
 
 ## Core Concept
 
@@ -44,6 +57,8 @@ brainrepo/
 └── Archive/        # Completed projects
 ```
 
+See [references/structure.md](references/structure.md) for detailed breakdown.
+
 ## Capture Rules
 
 ### What to Capture (Immediately)
@@ -63,11 +78,11 @@ brainrepo/
 
 - Casual chat without information value
 - Temporary queries ("what time is it")
-- Information you can easily Google
+- Information easily searchable online
 
 ## Note Format
 
-Every note uses this minimal frontmatter:
+Every note uses minimal frontmatter:
 
 ```markdown
 ---
@@ -81,11 +96,9 @@ related: ["[[Other Note]]"]
 Content here. Link to [[Related Notes]] freely.
 ```
 
-## Daily Workflow
+Use templates from `assets/templates/` when creating new notes.
 
-### Morning (Optional)
-- Check `Tasks/index.md` for today's priorities
-- Review yesterday's `Journal/` entry
+## Daily Workflow
 
 ### During Day
 - Dump everything to `Inbox/`
@@ -104,15 +117,16 @@ Process Inbox/:
 3. Move completed projects to Archive/
 4. Update `Tasks/index.md`
 
+See [references/workflows.md](references/workflows.md) for detailed workflows.
+
 ## Commands
 
-Tell your AI:
-
-| Say | Action |
-|-----|--------|
+| User says | Action |
+|-----------|--------|
+| "Set up brainrepo" | Run onboarding, create structure |
 | "Save this: [text]" | Capture to Inbox/ |
-| "New project: [name]" | Create Projects/name/ |
-| "Add person: [name]" | Create People/name.md |
+| "New project: [name]" | Create Projects/name/ with template |
+| "Add person: [name]" | Create People/name.md with template |
 | "What do I know about X?" | Search & retrieve |
 | "Daily review" | Process Inbox/, update Journal/ |
 | "Weekly review" | Full system review |
@@ -133,7 +147,6 @@ Relevant insight: [[Notes/negotiation-tactics]]
 | Have deadlines | No end date |
 | Can be "done" | Maintained forever |
 | Specific outcome | Standard to uphold |
-| Examples: Launch app, Write book | Examples: Health, Family, Career |
 
 ## File Naming
 
@@ -142,28 +155,8 @@ Relevant insight: [[Notes/negotiation-tactics]]
 - Dates: `YYYY-MM-DD.md`
 - People: `firstname-lastname.md`
 
-## Git Workflow
-
-```bash
-# Daily
-git add -A && git commit -m "daily: $(date +%Y-%m-%d)"
-git push
-
-# After major changes
-git commit -m "add: project X" 
-git commit -m "process: weekly review"
-```
-
-## Integration
-
-Works with:
-- **Obsidian** — Open folder as vault
-- **VS Code** — With Markdown preview
-- **Any AI** — Claude Code, OpenClaw, Cursor, etc.
-- **Mobile** — iCloud/Dropbox sync + any markdown app
-
 ## References
 
 - [Structure Guide](references/structure.md) — Detailed folder breakdown
-- [Templates](assets/templates/) — Note templates to copy
-- [Workflows](references/workflows.md) — Processing workflows
+- [Workflows](references/workflows.md) — Daily/weekly/monthly workflows
+- [Templates](assets/templates/) — Note templates
