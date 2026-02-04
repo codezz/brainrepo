@@ -16,7 +16,7 @@ Your personal knowledge repository. Capture fast, organize automatically, retrie
 **Before any action**, check if brainrepo is initialized:
 
 1. Look for brain folder with expected structure (Inbox/, Projects/, Areas/)
-2. **Default location:** `~/second-brain/`
+2. **Default location:** `~/Documents/brainrepo/`
 3. If NOT found → **Run onboarding automatically**
 4. If found → Proceed with user request
 
@@ -24,7 +24,7 @@ Your personal knowledge repository. Capture fast, organize automatically, retrie
 
 Triggers automatically on first interaction, or when user says "set up brainrepo":
 
-1. Ask where to create the brain (default: `~/second-brain/`)
+1. Ask where to create the brain (default: `~/Documents/brainrepo/`)
 2. Create the folder structure:
 
 ```bash

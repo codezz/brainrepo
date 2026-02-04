@@ -42,7 +42,7 @@ Tell your AI:
 ```
 
 The AI will:
-1. Ask where to create your brain (default: `~/brainrepo`)
+1. Ask where to create your brain (default: `~/Documents/brainrepo/`)
 2. Create the folder structure
 3. Initialize git (optional)
 4. You're ready to go!
