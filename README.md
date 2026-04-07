@@ -34,6 +34,8 @@ openclaw plugins install @remember-md/remember
 
 ### Claude Code
 
+Run these from your **terminal** (not from inside Claude Code):
+
 ```bash
 claude plugin marketplace add remember-md/marketplace
 claude plugin install remember@remember-md
@@ -41,7 +43,7 @@ claude plugin install remember@remember-md
 
 Then start Claude Code and run `/remember:init` to create your second brain structure and configure permissions.
 
-> **Note:** Another unrelated plugin named `remember` exists in the `claude-plugins-official` marketplace (different project, same name). Always disambiguate with the `@remember-md` suffix. If you previously installed the wrong one, remove it first: `claude plugin uninstall remember@claude-plugins-official`
+> **Important — use the terminal, not the `/plugin` slash command.** An unrelated plugin also named `remember` exists in the default `claude-plugins-official` marketplace. The `/plugin install remember@remember-md` slash command currently ignores the `@remember-md` qualifier and installs the wrong one. The terminal command (`claude plugin install remember@remember-md`) honors the marketplace and installs correctly. If you already got the wrong one, remove it with `claude plugin uninstall remember@claude-plugins-official`.
 
 ---
 
