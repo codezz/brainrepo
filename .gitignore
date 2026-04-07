@@ -25,3 +25,4 @@ Thumbs.db
 # Temporary
 *.tmp
 *.log
+.claude/settings.local.json
