@@ -184,3 +184,7 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 **Remember.md — One brain. Every AI tool.** [Star on GitHub](https://github.com/remember-md/remember)
+
+## Download History
+
+[![Download History](https://skill-history.com/chart/codezz/brainrepo.svg)](https://skill-history.com/codezz/brainrepo)
