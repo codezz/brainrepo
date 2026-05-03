@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { getBrainRoot } = require('./scripts/config');
 const { formatCompact } = require('./scripts/build-index');
+const { buildCaptureContext } = require('./scripts/build-context');
 
 const MAX_EVIDENCE_LINES = 20;
 
@@ -92,71 +93,12 @@ const plugin = {
         },
         required: ['userMessage'],
       },
-      async execute(_id, params) {
+      async execute(_id, _params) {
         const brain = getBrainRoot();
         if (!fs.existsSync(brain)) {
           return { content: [{ type: 'text', text: 'Brain not found. Run /remember:init first.' }] };
         }
-
-        let compactIndex;
-        try {
-          compactIndex = formatCompact(brain);
-        } catch {
-          compactIndex = `BRAIN INDEX (${brain})\n(index unavailable)`;
-        }
-
-        const pluginRoot = __dirname;
-        const templatePath = path.join(pluginRoot, 'assets', 'templates', 'brain-dump-context.md');
-        const today = new Date().toISOString().slice(0, 10);
-        let instructions;
-        try {
-          instructions = fs.readFileSync(templatePath, 'utf-8').replace(/\{\{TODAY\}\}/g, today);
-        } catch {
-          instructions = '(template missing)';
-        }
-
-        // Load REMEMBER.md — cascading: global (brain) + project (cwd)
-        const sectionsToExtract = ['Capture Rules', 'Processing', 'Custom Types', 'Language'];
-
-        function extractSections(filePath, sections) {
-          let text;
-          try { text = fs.readFileSync(filePath, 'utf-8'); } catch { return {}; }
-          const result = {};
-          for (const name of sections) {
-            const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const re = new RegExp(`^## ${escaped}\\s*\\n(.*?)(?=^## |$)`, 'ms');
-            const match = text.match(re);
-            if (match) {
-              const content = match[1].trim();
-              if (content) result[name] = content;
-            }
-          }
-          return result;
-        }
-
-        const globalSections = extractSections(path.join(brain, 'REMEMBER.md'), sectionsToExtract);
-        const projectSections = extractSections(path.join(process.cwd(), 'REMEMBER.md'), sectionsToExtract);
-
-        const merged = {};
-        for (const name of sectionsToExtract) {
-          const parts = [];
-          if (globalSections[name]) parts.push(globalSections[name]);
-          if (projectSections[name]) parts.push(projectSections[name]);
-          if (parts.length) merged[name] = parts.join('\n\n');
-        }
-
-        let rememberContext = '';
-        if (Object.keys(merged).length) {
-          const extracted = Object.entries(merged).map(([name, content]) => `## ${name}\n${content}`);
-          rememberContext = '\n\nUSER OVERRIDES (these take precedence over defaults above):\n' + extracted.join('\n\n');
-        }
-
-        const context =
-          `BRAIN DUMP — Full processing instructions. Brain: ${brain}. Today: ${today}.\n\n` +
-          `${compactIndex}\n\n` +
-          `${instructions}` +
-          `${rememberContext}`;
-
+        const context = buildCaptureContext(brain, __dirname);
         return { content: [{ type: 'text', text: context }] };
       },
     });

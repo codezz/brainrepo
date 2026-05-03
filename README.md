@@ -121,12 +121,18 @@ One brain, shared across all tools. Knowledge captured in OpenClaw is available 
 
 ## Customize
 
-**Cascading REMEMBER.md files** control how your brain works:
+The plugin ships with its own `REMEMBER.md` (default rulebook). You customize behavior by adding sections to your own `REMEMBER.md`:
 
-- `~/remember/REMEMBER.md` — global preferences
-- `./REMEMBER.md` — project-specific rules (layers on top)
+- `~/remember/REMEMBER.md` — your global preferences
+- `./REMEMBER.md` — project-specific rules (layers on top, when cwd is in a project)
 
-Sections: Capture Rules, Processing, Custom Types, Connections, Language, Templates.
+For each section in your `REMEMBER.md`:
+
+- **Same name as a default** (e.g. `## Routing`) → your content is **appended** to the default.
+- **`## Override: <Name>`** → your content **fully replaces** the default for that section.
+- **Any other name** → passed through verbatim at the end as a user-defined section.
+
+Available default sections (see plugin's `REMEMBER.md`): `Routing`, `Task Routing`, `Processing`, `Linking`, `Multi-File Updates`, `Format`, `Capture Rules`, `Custom Types`, `Language`, `After Save`.
 
 For full documentation, see [REMEMBER.md Guide](docs/REMEMBER-md-guide.md).
 

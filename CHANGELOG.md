@@ -5,6 +5,48 @@ All notable changes to Remember will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Default rulebook moved to plugin-root `REMEMBER.md`** (was `assets/templates/brain-dump-context.md`).
+  - Plugin defaults and user customizations now share the same section format (`## Section Name`).
+  - User `REMEMBER.md` sections with the same name as a default are **appended** to the default.
+  - User sections named `## Override: <Name>` **fully replace** the matching default.
+  - User sections that don't match any default are passed through verbatim at the end.
+  - Removed hardcoded section whitelist — any section in user's `REMEMBER.md` reaches the LLM now.
+
+- **Default routing updated to per-project KB layout:**
+  - Decisions → `Projects/<project>/decisions/YYYY-MM-DD-<topic>.md` (was `Notes/decision-<topic>.md`)
+  - Meetings → `Projects/<project>/meetings/YYYY-MM-DD-<who>.md` (new — previously inlined)
+  - Project quick captures → `Projects/<project>/inbox.md` (new)
+  - Per-project task backlog → `Projects/<project>/tasks.md` (was inlined in `<project>.md`)
+  - Sub-projects (`Projects/<x>/projects/<y>/`) bubble KB to the parent with a `[<sub>]` tag.
+
+### Refactored
+
+- Extracted `scripts/build-context.js` — shared module for capture context building.
+- `index.js` (OpenClaw) and `scripts/user_prompt.js` (Claude Code) now both call `buildCaptureContext()`. ~70 lines of duplicate logic removed.
+
+### Migration
+
+If you depend on the previous routing (decisions in `Notes/`, all project content in `<project>.md`), add to your `REMEMBER.md`:
+
+```md
+## Override: Routing
+- Person interaction → People/<name>.md
+- Decision → Notes/decision-<topic>.md
+- Project work → Projects/<project>/<project>.md
+- Daily log → Journal/{{TODAY}}.md
+- Area → Areas/<area>.md
+- Unclear → Inbox/
+
+## Override: Task Routing
+- URGENT → Tasks/tasks.md (## Focus, max 10)
+- IMPORTANT → Tasks/tasks.md (## Next Up, max 15)
+- PROJECT-SPECIFIC → Projects/<project>/<project>.md (## Tasks)
+```
+
 ## [2.0.6] - 2026-02-20
 
 ### Added

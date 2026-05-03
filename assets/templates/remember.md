@@ -1,6 +1,6 @@
 # REMEMBER.md
-Custom rules on top of remember plugin default instructions. 
-How your Second Brain captures and processes knowledge.
+
+Your custom rules on top of the Remember plugin defaults. See the plugin README for how merging works (append / Override / passthrough).
 
 ---
 
