@@ -1,6 +1,13 @@
 ---
 created: {{date}}
+updated: {{date}}
 tags: []
+type: world-fact
+freshness: stable
+sources_count: 0
+# confidence: 0.7   # uncomment if type=belief
+evidence: []
+counter_evidence: []
 related: []
 ---
 

@@ -1,8 +1,12 @@
 ---
 created: {{date}}
+updated: {{date}}
 status: active
-deadline: 
 tags: [project]
+type: observation
+last_consolidated: {{date}}
+sources_count: 0
+freshness: stable
 related: []
 ---
 

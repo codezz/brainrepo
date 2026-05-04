@@ -1,6 +1,7 @@
 ---
 created: {{date}}
 tags: [journal]
+type: experience
 ---
 
 # {{date}}

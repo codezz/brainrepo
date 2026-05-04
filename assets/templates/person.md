@@ -1,6 +1,11 @@
 ---
 created: {{date}}
+updated: {{date}}
 tags: [person]
+type: observation
+last_consolidated: {{date}}
+sources_count: 0
+freshness: stable
 related: []
 ---
 
