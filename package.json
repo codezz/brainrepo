@@ -1,6 +1,6 @@
 {
   "name": "@remember-md/remember",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Portable knowledge base — one brain, every AI tool. Extract decisions, people, and insights from your AI sessions into organized local markdown.",
   "main": "index.js",
   "keywords": [

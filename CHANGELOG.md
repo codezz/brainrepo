@@ -47,7 +47,7 @@ If you depend on the previous routing (decisions in `Notes/`, all project conten
 - PROJECT-SPECIFIC → Projects/<project>/<project>.md (## Tasks)
 ```
 
-## [2.1.0] - 2026-05-04
+## [2.2.0] - 2026-05-04
 
 ### Added
 - **Epistemic schema** — additive frontmatter on L2 files (`type`, `freshness`, `confidence`, `sources_count`, `evidence[]`, `counter_evidence[]`). Fully backward-compatible; files without these fields keep working.
