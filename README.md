@@ -52,11 +52,11 @@ Then start Claude Code and run `/remember:init` to create your second brain stru
 ```
 ~/remember/
 ├── REMEMBER.md     # Your custom rules (you edit this)
-├── Persona.md      # Your patterns (AI learns this)
-├── People/         # One note per person
+├── Persona.md      # Your patterns + Top Beliefs (AI auto-manages)
+├── People/         # One note per person (type: observation)
 ├── Projects/       # Active work with logs and tasks
-├── Notes/          # Decisions, learnings, insights
-├── Journal/        # Daily notes (YYYY-MM-DD.md)
+├── Notes/          # World-facts, decisions, beliefs (typed)
+├── Journal/        # Daily notes + digests/ for weekly summaries
 ├── Tasks/          # Focus + Next Up priorities
 ├── Areas/          # Ongoing responsibilities
 ├── Resources/      # Links, articles, references
@@ -67,15 +67,19 @@ Then start Claude Code and run `/remember:init` to create your second brain stru
 
 All files use YAML frontmatter + `[[wikilinks]]` — Obsidian-native, browsable in any markdown editor.
 
+Plugin state (audit log, thresholds) lives at `~/.local/state/remember/` — outside the brain, never touched by Obsidian.
+
 ---
 
 ## Commands
 
 | Command | What it does |
 |---------|-------------|
-| `/remember:process` | Extract knowledge from past AI sessions into your brain |
-| `/remember:status` | Show brain stats — file counts, recent activity |
 | `remember this: ...` | Instant capture — routes to the right place automatically |
+| `/remember:process` | Extract knowledge from past AI sessions into your brain |
+| `/remember:evolve` | Re-synthesize entities, reflect on beliefs, pin top beliefs to Persona |
+| `/remember:digest` | Generate weekly/monthly summary into `Journal/digests/` |
+| `/remember:status` | Show brain stats — file counts, freshness, top beliefs |
 | `/remember:init` | Initialize your second brain structure |
 
 ---
@@ -106,6 +110,32 @@ Say "remember this: met with Sarah, decided to use Postgres for ACID compliance"
 ### Adaptive Persona
 
 `Persona.md` evolves with you — code style, naming conventions, review preferences, communication patterns. Loaded automatically every OpenClaw and Claude Code session so your AI knows how you work.
+
+### Self-evolving brain
+
+Captured facts aren't static. The brain has three layers and an epistemic schema (`type` / `freshness` / `confidence` / `evidence`) that lets it grow:
+
+- **L1 — Capture** — `Inbox/`, `Journal/`, `Tasks/`. Append-only, raw.
+- **L2 — Curate** — `Notes/`, `People/`, `Projects/`, `Areas/`. Each fact is tagged as `world-fact`, `belief`, `observation`, or `experience`, with evidence and a freshness trend.
+- **L3 — Pinned** — `Persona.md`. Always loaded; auto-managed top beliefs.
+
+Run `/remember:evolve` weekly (manually or via `/loop 7d /remember:evolve`) to:
+
+1. **Consolidate** — re-synthesize People / Project / Area profiles from accumulated mentions
+2. **Reflect** — re-score belief confidence, mark contradictions, flag stale items
+3. **Promote** — pin the top beliefs to `Persona.md` based on configurable thresholds
+
+Run `/remember:digest` weekly/monthly for a written summary of what changed (`Journal/digests/2026-W19.md`). Every auto-change is logged to `~/.local/state/remember/evolution.log` — fully auditable, fully reversible (it's all markdown + git).
+
+### Schedule with `/loop`
+
+```
+/loop 7d /remember:evolve
+/loop 7d /remember:digest
+/loop 30d /remember:digest --last-month
+```
+
+`/loop` is built into Claude Code — no extra plugin or cron daemon needed.
 
 ---
 
@@ -164,6 +194,15 @@ A: No, but Obsidian gives the best experience — graph view, backlinks, search.
 
 **Q: How does it learn my coding patterns?**
 A: Persona.md captures your code style, naming conventions, and workflow preferences over time. It's loaded at the start of every session so your AI knows how you work.
+
+**Q: What does `/remember:evolve` actually do?**
+A: Three phases. (1) Re-synthesizes entity profiles (People/Projects/Areas) from accumulated mentions. (2) Re-scores belief confidence based on evidence vs counter-evidence and marks freshness (stable/strengthening/weakening/stale/contradicted). (3) Pins top beliefs to `Persona.md ## Top Beliefs` based on configurable thresholds (default: confidence ≥ 0.85, sources ≥ 5). Phase 3 is deterministic and runs without LLM calls — cheap to cron. Configure thresholds in `~/.local/state/remember/config.json` or your `REMEMBER.md`.
+
+**Q: Will `/remember:evolve` overwrite my hand-curated Persona?**
+A: No. It only manages the `## Top Beliefs` section by reference (wikilinks, not copies). Mission, Directives, Disposition, and Evidence Log stay in your hands. To turn off auto-promotion entirely: set `auto_promote: false` in `~/.local/state/remember/config.json`.
+
+**Q: Where's the audit trail?**
+A: `~/.local/state/remember/evolution.log` — append-only, ISO-timestamped, one line per auto-change. Tail it whenever you want to see what the brain did on its own. Run `/remember:digest` for a weekly markdown summary in `Journal/digests/`.
 
 **Q: How much does it cost?**
 A: Free, always. MIT licensed, open source.
