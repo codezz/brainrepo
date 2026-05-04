@@ -63,9 +63,43 @@ function detectType(text) {
   return TYPES.WORLD_FACT;
 }
 
+const VALID_TYPES = new Set(Object.values(TYPES));
+const VALID_FRESHNESS = new Set(Object.values(FRESHNESS));
+
+function validateFrontmatter(meta) {
+  const errors = [];
+  if (!meta || typeof meta !== 'object') {
+    return { valid: false, errors: ['frontmatter must be an object'] };
+  }
+
+  if (!meta.type) {
+    errors.push('missing required field: type');
+  } else if (!VALID_TYPES.has(meta.type)) {
+    errors.push(`invalid type: "${meta.type}" (allowed: ${[...VALID_TYPES].join(', ')})`);
+  }
+
+  if (meta.freshness !== undefined && !VALID_FRESHNESS.has(meta.freshness)) {
+    errors.push(`invalid freshness: "${meta.freshness}" (allowed: ${[...VALID_FRESHNESS].join(', ')})`);
+  }
+
+  if (meta.confidence !== undefined) {
+    const c = Number(meta.confidence);
+    if (Number.isNaN(c) || c < 0 || c > 1) {
+      errors.push(`invalid confidence: "${meta.confidence}" (must be 0.0–1.0)`);
+    }
+  }
+
+  if (meta.type === TYPES.BELIEF && meta.confidence === undefined) {
+    errors.push('confidence is required for type=belief');
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
 module.exports = {
   TYPES,
   FRESHNESS,
   DEFAULT_THRESHOLDS,
   detectType,
+  validateFrontmatter,
 };

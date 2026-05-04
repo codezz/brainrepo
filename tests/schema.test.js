@@ -68,3 +68,55 @@ test('detectType: empty / unknown defaults to world-fact', () => {
   assert.equal(schema.detectType(''), schema.TYPES.WORLD_FACT);
   assert.equal(schema.detectType('   '), schema.TYPES.WORLD_FACT);
 });
+
+test('validateFrontmatter: valid belief passes', () => {
+  const result = schema.validateFrontmatter({
+    type: 'belief',
+    confidence: 0.7,
+    freshness: 'stable',
+    sources_count: 3,
+    evidence: [{ source: 'journal/2026-05-04', quote: 'said it', date: '2026-05-04' }],
+  });
+  assert.equal(result.valid, true);
+  assert.deepEqual(result.errors, []);
+});
+
+test('validateFrontmatter: belief missing confidence is invalid', () => {
+  const result = schema.validateFrontmatter({
+    type: 'belief',
+    freshness: 'stable',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('confidence')));
+});
+
+test('validateFrontmatter: unknown type is invalid', () => {
+  const result = schema.validateFrontmatter({ type: 'rumor' });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('type')));
+});
+
+test('validateFrontmatter: invalid freshness is invalid', () => {
+  const result = schema.validateFrontmatter({
+    type: 'world-fact',
+    freshness: 'rotten',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('freshness')));
+});
+
+test('validateFrontmatter: missing type is invalid', () => {
+  const result = schema.validateFrontmatter({});
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('type')));
+});
+
+test('validateFrontmatter: confidence out of range is invalid', () => {
+  const result = schema.validateFrontmatter({
+    type: 'belief',
+    confidence: 1.5,
+    freshness: 'stable',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('confidence')));
+});
