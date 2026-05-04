@@ -59,9 +59,11 @@ See `reference.md` for detailed merge rules.
 mkdir -p {brain_path}/{Inbox,Journal,Projects,Areas,Notes,People,Tasks,Resources,Templates,Archive}
 ```
 
-### 4. Create Persona.md
+### 4. Create Persona.md (if it doesn't exist)
 
-Ask user:
+**Skip if `{brain_path}/Persona.md` already exists** — the user may have customized it. Never overwrite an existing Persona.
+
+Otherwise, ask:
 1. **What's your name?** (default: User)
 2. **What's your timezone?** (default: UTC)
 3. **What languages do you speak?** (default: English)
