@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { DEFAULT_THRESHOLDS } = require('./schema');
 
 let _cached = null;
 
@@ -79,7 +80,29 @@ function parseFrontmatter(filePath, maxBytes = 2048) {
   return meta;
 }
 
-module.exports = { getBrainRoot, loadConfig, parseFrontmatter };
+function loadEvolutionConfig({ stateDir = null } = {}) {
+  const dir = stateDir || path.join(
+    process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state'),
+    'remember',
+  );
+  const file = path.join(dir, 'config.json');
+
+  let user = {};
+  try {
+    user = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    if (!user || typeof user !== 'object') user = {};
+  } catch {
+    user = {};
+  }
+
+  return {
+    thresholds: { ...DEFAULT_THRESHOLDS, ...(user.thresholds || {}) },
+    auto_promote: typeof user.auto_promote === 'boolean' ? user.auto_promote : true,
+    paths: { ...(user.paths || {}) },
+  };
+}
+
+module.exports = { getBrainRoot, loadConfig, parseFrontmatter, loadEvolutionConfig };
 
 // CLI: node config.js [brain_root | key.path]
 if (require.main === module) {
