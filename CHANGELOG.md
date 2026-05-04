@@ -49,7 +49,7 @@ If you depend on the previous routing (decisions in `Notes/`, all project conten
 
 ## [2.2.0] - 2026-05-04
 
-Three-Layer Memory release: turns Remember from a capture/process tool into a self-evolving brain. Schema foundation + two new skills (`/remember:evolve`, `/remember:digest`) + deterministic helpers that keep cron costs at zero.
+Three-Layer Memory release: turns Remember from a capture/process tool into a self-evolving brain. Schema foundation + new `/remember:evolve` skill + deterministic helpers that keep cron costs at zero.
 
 ### Added — Schema foundation
 
@@ -70,22 +70,15 @@ Three-Layer Memory release: turns Remember from a capture/process tool into a se
 - **`scripts/promote.js`** — deterministic Top Beliefs pinning. CLI-ready (`node scripts/promote.js [--dry-run]`) for cron flows that don't want to invoke an LLM. Filters by configurable thresholds, ranks by `confidence × log(sources+1)`, writes wikilinks (never copies). Demotion logged to `evolution.log`.
 - **REMEMBER.md `## Promotion Thresholds`** — new default-rulebook section users can override (`promotion_confidence`, `promotion_sources`, `top_beliefs_n`, `stale_days`, `consolidate_touches`, `auto_promote`).
 
-### Added — Digest
-
-- **`/remember:digest`** — weekly/monthly summary skill that reads `evolution.log` and writes `Journal/digests/<YYYY>-W<NN>.md` (or `<YYYY>-<MM>.md` for monthly). Surfaces contradicted/demoted/stale items for human review without modifying anything.
-- **`scripts/digest.js`** — log parsing and aggregation helpers. Pure functions, fully tested. CLI-runnable: `node scripts/digest.js [--month]`.
-
 ### Cron pattern
 
 Built on Claude Code's `/loop`:
 
 ```
 /loop 7d /remember:evolve
-/loop 7d /remember:digest
-/loop 30d /remember:digest --last-month
 ```
 
-No external scheduler needed.
+No external scheduler needed. For audit, `tail ~/.local/state/remember/evolution.log` or run `/remember:status`.
 
 ### Changed
 
@@ -100,8 +93,7 @@ No external scheduler needed.
   - `tests/evolution-log.test.js` — 4 tests on the audit logger
   - `tests/config.test.js` — 3 tests on `loadEvolutionConfig`
   - `tests/promote.test.js` — 17 tests on `scripts/promote.js`
-  - `tests/digest.test.js` — 12 tests on `scripts/digest.js`
-- Total: 57 tests, 0 fail.
+- Total: 45 tests, 0 fail.
 
 ### Migration
 

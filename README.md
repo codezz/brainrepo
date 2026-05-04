@@ -56,7 +56,7 @@ Then start Claude Code and run `/remember:init` to create your second brain stru
 ├── People/         # One note per person (type: observation)
 ├── Projects/       # Active work with logs and tasks
 ├── Notes/          # World-facts, decisions, beliefs (typed)
-├── Journal/        # Daily notes + digests/ for weekly summaries
+├── Journal/        # Daily notes (YYYY-MM-DD.md)
 ├── Tasks/          # Focus + Next Up priorities
 ├── Areas/          # Ongoing responsibilities
 ├── Resources/      # Links, articles, references
@@ -78,7 +78,6 @@ Plugin state (audit log, thresholds) lives at `~/.local/state/remember/` — out
 | `remember this: ...` | Instant capture — routes to the right place automatically |
 | `/remember:process` | Extract knowledge from past AI sessions into your brain |
 | `/remember:evolve` | Re-synthesize entities, reflect on beliefs, pin top beliefs to Persona |
-| `/remember:digest` | Generate weekly/monthly summary into `Journal/digests/` |
 | `/remember:status` | Show brain stats — file counts, freshness, top beliefs |
 | `/remember:init` | Initialize your second brain structure |
 
@@ -125,14 +124,12 @@ Run `/remember:evolve` weekly (manually or via `/loop 7d /remember:evolve`) to:
 2. **Reflect** — re-score belief confidence, mark contradictions, flag stale items
 3. **Promote** — pin the top beliefs to `Persona.md` based on configurable thresholds
 
-Run `/remember:digest` weekly/monthly for a written summary of what changed (`Journal/digests/2026-W19.md`). Every auto-change is logged to `~/.local/state/remember/evolution.log` — fully auditable, fully reversible (it's all markdown + git).
+Every auto-change is logged to `~/.local/state/remember/evolution.log` — fully auditable, fully reversible (it's all markdown + git). `tail` it any time to see what the brain did on its own.
 
 ### Schedule with `/loop`
 
 ```
 /loop 7d /remember:evolve
-/loop 7d /remember:digest
-/loop 30d /remember:digest --last-month
 ```
 
 `/loop` is built into Claude Code — no extra plugin or cron daemon needed.
@@ -202,7 +199,7 @@ A: Three phases. (1) Re-synthesizes entity profiles (People/Projects/Areas) from
 A: No. It only manages the `## Top Beliefs` section by reference (wikilinks, not copies). Mission, Directives, Disposition, and Evidence Log stay in your hands. To turn off auto-promotion entirely: set `auto_promote: false` in `~/.local/state/remember/config.json`.
 
 **Q: Where's the audit trail?**
-A: `~/.local/state/remember/evolution.log` — append-only, ISO-timestamped, one line per auto-change. Tail it whenever you want to see what the brain did on its own. Run `/remember:digest` for a weekly markdown summary in `Journal/digests/`.
+A: `~/.local/state/remember/evolution.log` — append-only, ISO-timestamped, one line per auto-change. Tail it whenever you want to see what the brain did on its own. Run `/remember:status` to see the latest entries inline.
 
 **Q: How much does it cost?**
 A: Free, always. MIT licensed, open source.
