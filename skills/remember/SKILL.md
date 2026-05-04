@@ -44,6 +44,27 @@ Apply all rules from both. Project additions layer on top of global. User instru
 
 Extract from conversational input: person names, project references, tasks, decisions, learnings, area updates, URLs.
 
+### Step 2.5: Tag with epistemic type
+
+For every chunk of content extracted in Step 2, classify it as one of:
+
+- `world-fact` — verifiable claim about reality (decision, technical fact, learning)
+- `belief` — subjective claim with implicit confidence (preference, hypothesis, judgment)
+- `observation` — synthesized profile per entity (creates/updates `People/<x>.md`, `Projects/<x>/<x>.md`, `Areas/<x>.md`)
+- `experience` — first-person event log (always Journal/<date>.md)
+
+Heuristics (apply in order; first match wins):
+
+1. Contains a date or "met with" / "called" → **experience**
+2. Phrase patterns "we decided", "going with", "chose X over Y" → **world-fact**
+3. Predicate about an entity ("works as", "lives in", "based in", "leads the team") → **observation**
+4. Words "prefers", "probably", "I think", "seems like", "better to" → **belief**
+5. Else default → **world-fact**
+
+When creating or editing a file, write/preserve the frontmatter `type:` field accordingly. For beliefs, `confidence` is REQUIRED (use your best estimate 0.0–1.0).
+
+The same rules live in `scripts/schema.js` (`detectType`); use that as canonical reference if uncertain.
+
 ### Step 3: Build Resolution Map
 
 Resolve every name/reference against the knowledge index:
@@ -97,3 +118,11 @@ See `reference.md` for detailed templates and routing tables.
 - Files: `kebab-case.md`
 - People: `firstname.md` or `firstname-lastname.md`
 - Dates: `YYYY-MM-DD.md`
+
+## Schema rules
+
+- Every L2 file (Notes/People/Projects/Areas) carries `type:`. Use `Step 2.5` heuristics or `scripts/schema.js detectType()`.
+- Every captured fact must include at least one `evidence` entry: `{ source: <where>, quote: <verbatim>, date: <SESSION_DATE> }`.
+- For `type: belief`, `confidence: 0.0–1.0` is REQUIRED.
+- `freshness: stable` is the default for new captures. The `evolve` skill (Phase 2) updates this later.
+- Never overwrite L2 files. Append evidence; if a contradiction emerges, write to `counter_evidence` (the `evolve` skill handles this in Phase 2 — for live capture, just append normally).

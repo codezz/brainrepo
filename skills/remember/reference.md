@@ -21,11 +21,16 @@ Format: `- [ ] Task [[Projects/name/name|Name]] [⚡ if urgent] ({DATE})`
 ### New Person
 ```markdown
 ---
-created: {TODAY}
-updated: {TODAY}
+created: {SESSION_DATE}
+updated: {SESSION_DATE}
 tags: [person]
-role: {if known}
-last_contact: {TODAY}
+type: observation
+role: {role if known}
+organization: {org if known}
+last_contact: {SESSION_DATE}
+last_consolidated: {SESSION_DATE}
+sources_count: 1
+freshness: stable
 related: []
 ---
 
@@ -49,10 +54,19 @@ related: []
 ### New Note/Decision
 ```markdown
 ---
-created: {TODAY}
-updated: {TODAY}
+created: {SESSION_DATE}
+updated: {SESSION_DATE}
 tags: [{topic-tags}]
-related: [{wikilinks}]
+type: world-fact            # or: belief — set per detectType heuristic
+freshness: stable
+sources_count: 1
+# confidence: 0.7           # required if type=belief
+evidence:
+  - source: journal/{SESSION_DATE}
+    quote: "{verbatim quote from session}"
+    date: {SESSION_DATE}
+counter_evidence: []
+related: [{wikilinks to related entities}]
 ---
 
 # {Title}
@@ -63,9 +77,14 @@ related: [{wikilinks}]
 ### New Project
 ```markdown
 ---
-created: {TODAY}
+created: {SESSION_DATE}
+updated: {SESSION_DATE}
 status: active
 tags: [project]
+type: observation
+last_consolidated: {SESSION_DATE}
+sources_count: 1
+freshness: stable
 related: []
 ---
 
