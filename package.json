@@ -24,6 +24,9 @@
     "url": "https://github.com/remember-md/remember/issues"
   },
   "homepage": "https://github.com/remember-md/remember#readme",
+  "scripts": {
+    "test": "node --test"
+  },
   "files": [
     "index.js",
     "openclaw.plugin.json",
