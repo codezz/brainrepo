@@ -41,26 +41,7 @@ If brain path doesn't exist → tell user to run `/remember:init`.
 
 ### 2. Show Brain Statistics
 
-Count files and directories in the brain:
-
-```
-Brain: {brain_path}
-
-Projects: {count} active
-  - project-a (list names)
-  - project-b
-
-People: {count} total
-  - name-a
-  - name-b
-
-Areas: {count}
-Notes: {count} knowledge notes
-Journal: {count} days logged
-Tasks: show open/completed count from Tasks/tasks.md
-Resources: {count}
-Inbox: {count} items
-```
+See "What to show" below for the full output template.
 
 ### 3. Show Recent Activity
 
@@ -70,9 +51,54 @@ List recently modified files (last 7 days) across People/, Projects/, Journal/, 
 
 Read `{brain_path}/Persona.md` and show a brief summary of captured patterns.
 
+## What to show
+
+````
+Brain path: {brain}
+Counts:
+  - {N} Notes
+  - {N} People
+  - {N} Projects (active: {N})
+  - {N} Areas
+  - {N} Journal entries (latest: {date})
+  - {N} Tasks (Focus: {n}, Next Up: {n})
+
+Schema breakdown (by type):
+  - world-fact: {N}
+  - belief:    {N}
+  - observation: {N}
+  - experience: {N}
+  - untyped (legacy): {N}
+
+Freshness (L2 files only):
+  - stable:        {N}
+  - strengthening: {N}
+  - weakening:     {N}
+  - stale:         {N}
+  - contradicted:  {N}
+
+Top 5 beliefs by confidence:
+  1. [[Notes/x]]  conf={c}  sources={n}  freshness={f}
+  2. ...
+
+Recent evolution.log (last 5 entries):
+  {timestamp}  {TYPE}  {message}
+  ...
+````
+
+To produce this:
+1. Walk the brain — read frontmatter for each L2 markdown file (use `scripts/config.js parseFrontmatter`).
+2. Tally by `type` and `freshness`.
+3. Filter `type: belief` files; sort by `confidence` desc; take top 5.
+4. Read tail of `~/.local/state/remember/evolution.log` (use `tail -n 5`).
+
+Existing files without `type:` count under "untyped (legacy)" — the upgrade is lazy.
+
+If `~/.local/state/remember/evolution.log` does not exist yet (no `evolve` runs have occurred), show `(none yet)` for the "Recent evolution.log" section or skip it.
+
 ## Implementation
 
-Use `LS` and `Glob` tools to read directories and count files. For complex stats, use a subagent.
+Use `LS` and `Glob` tools to read directories and count files. For frontmatter parsing, use `parseFrontmatter` from `scripts/config.js`. For complex stats, use a subagent.
 
 ## Notes
 
