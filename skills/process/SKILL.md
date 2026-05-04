@@ -69,6 +69,22 @@ Resolve every name, project, topic against the knowledge index. Fuzzy match: "Jo
 
 Apply REMEMBER.md rules first (Always/Never/Routing overrides/Custom Types), then fall through to default classification in `reference.md`. Skip: routine code generation, debugging noise, tool call chatter.
 
+### 4b.5: Tag with epistemic type
+
+Once classified to a folder/file by `4b`, also tag with one of: `world-fact`, `belief`, `observation`, `experience`.
+
+Apply the same heuristics as the `remember` skill (or call `scripts/schema.js detectType` for the same logic):
+
+1. Contains a date or "met with" / "called" → **experience** (Journal entry)
+2. "we decided" / "going with" / "chose X over Y" → **world-fact**
+3. Predicate about an entity ("works as", "lives in", "based in", "leads the team") → **observation** (People/Project/Area file)
+4. "prefers" / "probably" / "I think" / "seems like" / "better to" → **belief**
+5. Else default → **world-fact**
+
+This skill MUST emit `type:` in the frontmatter of every newly created L2 file. For beliefs, `confidence` is REQUIRED. For all L2 files, include at least one `evidence` entry (source + quote + SESSION_DATE).
+
+This skill does NOT trigger consolidation, reflection, or promotion. Those are the responsibility of `/remember:evolve` (Phase 2).
+
 ### 4c. Update Existing Files (Edit Tool)
 
 Use `Edit` for surgical updates. Do NOT rewrite whole files.

@@ -144,9 +144,13 @@ Always mention: session date, whether append/expand (old sessions), skipped file
 created: {SESSION_DATE}
 updated: {SESSION_DATE}
 tags: [person]
+type: observation
 role: {role if known}
 organization: {org if known}
 last_contact: {SESSION_DATE}
+last_consolidated: {SESSION_DATE}
+sources_count: 1
+freshness: stable
 related: []
 ---
 
@@ -171,8 +175,13 @@ related: []
 ```markdown
 ---
 created: {SESSION_DATE}
+updated: {SESSION_DATE}
 status: active
 tags: [project]
+type: observation
+last_consolidated: {SESSION_DATE}
+sources_count: 1
+freshness: stable
 related: []
 ---
 
@@ -197,6 +206,15 @@ related: []
 created: {SESSION_DATE}
 updated: {SESSION_DATE}
 tags: [{topic-tags}]
+type: world-fact            # or: belief — set per detectType heuristic
+freshness: stable
+sources_count: 1
+# confidence: 0.7           # required if type=belief
+evidence:
+  - source: journal/{SESSION_DATE}
+    quote: "{verbatim quote from session}"
+    date: {SESSION_DATE}
+counter_evidence: []
 related: [{wikilinks to related entities}]
 ---
 
@@ -214,6 +232,7 @@ related: [{wikilinks to related entities}]
 ---
 created: {SESSION_DATE}
 tags: [journal]
+type: experience
 ---
 
 # {SESSION_DATE}
@@ -267,3 +286,14 @@ When session contains URLs:
 - **Link forward only** — Obsidian handles backlinks
 - Write actual content in multiple files only when adding real information (not just backlinks)
 - In frontmatter: `related: ["[[Notes/topic]]", "[[Projects/name/name]]"]`
+
+---
+
+## Schema rules
+
+- Every newly created L2 file (Notes/People/Projects/Areas) carries `type:` (see Task heuristic). Use `scripts/schema.js detectType()` if uncertain.
+- Every fact must include at least one `evidence` entry: `{ source: <where>, quote: <verbatim>, date: <SESSION_DATE> }`.
+- For `type: belief`, `confidence: 0.0–1.0` is REQUIRED.
+- `freshness: stable` is the default for new captures.
+- Never overwrite L2 files (chronology + append rules already covered above).
+- This skill does NOT auto-trigger consolidation. The `evolve` skill (Phase 2) handles that.
