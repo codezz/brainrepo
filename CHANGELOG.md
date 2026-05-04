@@ -49,21 +49,65 @@ If you depend on the previous routing (decisions in `Notes/`, all project conten
 
 ## [2.2.0] - 2026-05-04
 
-### Added
+Three-Layer Memory release: turns Remember from a capture/process tool into a self-evolving brain. Schema foundation + two new skills (`/remember:evolve`, `/remember:digest`) + deterministic helpers that keep cron costs at zero.
+
+### Added — Schema foundation
+
 - **Epistemic schema** — additive frontmatter on L2 files (`type`, `freshness`, `confidence`, `sources_count`, `evidence[]`, `counter_evidence[]`). Fully backward-compatible; files without these fields keep working.
-- **`scripts/schema.js`** — shared constants (`TYPES`, `FRESHNESS`, `DEFAULT_THRESHOLDS`), `detectType(text)` heuristic, `validateFrontmatter(meta)` validator. Single source of truth used by `remember`, `process`, and (later) `evolve` skills.
+- **`scripts/schema.js`** — shared constants (`TYPES`, `FRESHNESS`, `DEFAULT_THRESHOLDS`), `detectType(text)` heuristic, `validateFrontmatter(meta)` validator. Single source of truth used by every schema-aware skill.
 - **`scripts/evolution-log.js`** — append-only audit log writer at `~/.local/state/remember/evolution.log`.
 - **`scripts/config.js`** — new `loadEvolutionConfig()` merging hard defaults with optional `~/.local/state/remember/config.json` (thresholds, `auto_promote`, paths).
-- **Persona.md template refresh** — five sections: `## Mission`, `## Directives`, `## Disposition`, `## Top Beliefs`, `## Evidence Log`. Existing Persona.md files are preserved; new sections only appear on `/remember:init`.
+- **Persona.md template refresh** — five sections: `## Mission`, `## Directives`, `## Disposition`, `## Top Beliefs`, `## Evidence Log`. Existing Persona.md files are preserved (init now skips when the file already exists).
 - **`status` skill upgrade** — shows schema breakdown by type, freshness counts, top-N beliefs by confidence, last 5 evolution.log entries.
-- **`tests/`** — new `node --test` suite covering `schema.js`, `evolution-log.js`, `config.js`. Run with `npm test`.
+
+### Added — Evolution
+
+- **`/remember:evolve`** — single weekly entry point with three internal phases:
+  1. **Consolidate (LLM)** — re-synthesize entity profiles (People/Projects/Areas) from accumulated mentions
+  2. **Reflect (LLM)** — re-score belief confidence, update freshness trend, mark contradictions
+  3. **Promote (deterministic)** — pin top beliefs into `Persona.md ## Top Beliefs` based on configurable thresholds. Calls `scripts/promote.js`; runs without LLM cost.
+  Power flags: `--consolidate-only`, `--reflect-only`, `--promote-only`, `--dry-run`.
+- **`scripts/promote.js`** — deterministic Top Beliefs pinning. CLI-ready (`node scripts/promote.js [--dry-run]`) for cron flows that don't want to invoke an LLM. Filters by configurable thresholds, ranks by `confidence × log(sources+1)`, writes wikilinks (never copies). Demotion logged to `evolution.log`.
+- **REMEMBER.md `## Promotion Thresholds`** — new default-rulebook section users can override (`promotion_confidence`, `promotion_sources`, `top_beliefs_n`, `stale_days`, `consolidate_touches`, `auto_promote`).
+
+### Added — Digest
+
+- **`/remember:digest`** — weekly/monthly summary skill that reads `evolution.log` and writes `Journal/digests/<YYYY>-W<NN>.md` (or `<YYYY>-<MM>.md` for monthly). Surfaces contradicted/demoted/stale items for human review without modifying anything.
+- **`scripts/digest.js`** — log parsing and aggregation helpers. Pure functions, fully tested. CLI-runnable: `node scripts/digest.js [--month]`.
+
+### Cron pattern
+
+Built on Claude Code's `/loop`:
+
+```
+/loop 7d /remember:evolve
+/loop 7d /remember:digest
+/loop 30d /remember:digest --last-month
+```
+
+No external scheduler needed.
 
 ### Changed
-- `remember` and `process` skills now type-tag every captured fact and emit evidence in frontmatter.
-- `process` skill explicitly does NOT auto-trigger consolidation. Entity re-synthesis lives in the upcoming `/remember:evolve` skill (Phase 2).
 
-### Foundation for v2.2 (`evolve` skill)
-- This release ships the schema and helpers but no behavioural change. The `evolve` skill (consolidate / reflect / promote phases) lands in v2.2.
+- `remember` and `process` skills now type-tag every captured fact and emit evidence in frontmatter (uses `scripts/schema.js detectType()` for consistency).
+- `process` skill explicitly does NOT auto-trigger consolidation. All evolution lives in `/remember:evolve`.
+- `init` skill now skips `Persona.md` if it already exists — never overwrites a customized Persona.
+
+### Tests
+
+- New `node --test` suite (zero new dependencies). `npm test` runs:
+  - `tests/schema.test.js` — 21 tests on TYPES/FRESHNESS/DEFAULT_THRESHOLDS/detectType/validateFrontmatter
+  - `tests/evolution-log.test.js` — 4 tests on the audit logger
+  - `tests/config.test.js` — 3 tests on `loadEvolutionConfig`
+  - `tests/promote.test.js` — 17 tests on `scripts/promote.js`
+  - `tests/digest.test.js` — 12 tests on `scripts/digest.js`
+- Total: 57 tests, 0 fail.
+
+### Migration
+
+- Existing brains keep working. Files without epistemic frontmatter count under "untyped (legacy)" in `/remember:status` and are upgraded lazily as the `remember`/`process` skills touch them.
+- Existing Persona.md files are preserved. To opt into the new sections, hand-edit or delete-and-rerun `/remember:init`.
+- To disable auto-promotion: set `"auto_promote": false` in `~/.local/state/remember/config.json`.
 
 ## [2.0.6] - 2026-02-20
 
