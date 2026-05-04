@@ -44,6 +44,19 @@ Apply all rules from both. Project additions layer on top of global. User instru
 
 Extract from conversational input: person names, project references, tasks, decisions, learnings, area updates, URLs.
 
+### Step 2.4: Journal the capture FIRST
+
+Before creating or editing any L2 file, append the user's verbatim quote to `{brain}/Journal/{TODAY}.md` (create the file if it doesn't exist; use the daily template from `reference.md`). This becomes the source-of-truth for the `evidence:` field on every L2 file you create in this capture.
+
+Format inside the journal file:
+
+```markdown
+## {Topic / Project name}
+- "{verbatim user quote}"
+```
+
+The journal entry's filesystem path is what every `evidence.source` will reference. Never invent a `chat/...` or `session/...` path that doesn't correspond to a real file.
+
 ### Step 2.5: Tag with epistemic type
 
 For every chunk of content extracted in Step 2, classify it as one of:
@@ -122,7 +135,8 @@ See `reference.md` for detailed templates and routing tables.
 ## Schema rules
 
 - Every L2 file (Notes/People/Projects/Areas) carries `type:`. Use `Step 2.5` heuristics or `scripts/schema.js detectType()`.
-- Every captured fact must include at least one `evidence` entry: `{ source: <where>, quote: <verbatim>, date: <SESSION_DATE> }`.
+- Every captured fact must include at least one `evidence` entry: `{ source: <real-file-path>, quote: <verbatim>, date: <SESSION_DATE> }`.
+- **`source:` MUST be a real file path inside the brain** — typically `Journal/<SESSION_DATE>.md` (the journaled capture from Step 2.4). Never invent paths like `chat/...`, `session/...`, or anything that doesn't exist on disk.
 - For `type: belief`, `confidence: 0.0–1.0` is REQUIRED.
 - `freshness: stable` is the default for new captures. The `evolve` skill (Phase 2) updates this later.
 - Never overwrite L2 files. Append evidence; if a contradiction emerges, write to `counter_evidence` (the `evolve` skill handles this in Phase 2 — for live capture, just append normally).

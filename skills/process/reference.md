@@ -211,7 +211,7 @@ freshness: stable
 sources_count: 1
 # confidence: 0.7           # required if type=belief
 evidence:
-  - source: journal/{SESSION_DATE}
+  - source: Journal/{SESSION_DATE}.md
     quote: "{verbatim quote from session}"
     date: {SESSION_DATE}
 counter_evidence: []

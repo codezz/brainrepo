@@ -69,6 +69,12 @@ Resolve every name, project, topic against the knowledge index. Fuzzy match: "Jo
 
 Apply REMEMBER.md rules first (Always/Never/Routing overrides/Custom Types), then fall through to default classification in `reference.md`. Skip: routine code generation, debugging noise, tool call chatter.
 
+### 4b.4: Journal the session FIRST
+
+Before creating L2 files, append a section for this session into `{brain}/Journal/{SESSION_DATE}.md` (create if missing — `type: experience` frontmatter). Include the verbatim quote(s) you intend to cite as evidence on any belief/world-fact files you'll create. The journal entry's path becomes the canonical `evidence.source` for everything you create from this session.
+
+Never invent a `chat/...`, `session/...`, or `transcript/...` path that doesn't exist on disk. The journal IS the source.
+
 ### 4b.5: Tag with epistemic type
 
 Once classified to a folder/file by `4b`, also tag with one of: `world-fact`, `belief`, `observation`, `experience`.
