@@ -47,6 +47,24 @@ If you depend on the previous routing (decisions in `Notes/`, all project conten
 - PROJECT-SPECIFIC → Projects/<project>/<project>.md (## Tasks)
 ```
 
+## [2.1.0] - 2026-05-04
+
+### Added
+- **Epistemic schema** — additive frontmatter on L2 files (`type`, `freshness`, `confidence`, `sources_count`, `evidence[]`, `counter_evidence[]`). Fully backward-compatible; files without these fields keep working.
+- **`scripts/schema.js`** — shared constants (`TYPES`, `FRESHNESS`, `DEFAULT_THRESHOLDS`), `detectType(text)` heuristic, `validateFrontmatter(meta)` validator. Single source of truth used by `remember`, `process`, and (later) `evolve` skills.
+- **`scripts/evolution-log.js`** — append-only audit log writer at `~/.local/state/remember/evolution.log`.
+- **`scripts/config.js`** — new `loadEvolutionConfig()` merging hard defaults with optional `~/.local/state/remember/config.json` (thresholds, `auto_promote`, paths).
+- **Persona.md template refresh** — five sections: `## Mission`, `## Directives`, `## Disposition`, `## Top Beliefs`, `## Evidence Log`. Existing Persona.md files are preserved; new sections only appear on `/remember:init`.
+- **`status` skill upgrade** — shows schema breakdown by type, freshness counts, top-N beliefs by confidence, last 5 evolution.log entries.
+- **`tests/`** — new `node --test` suite covering `schema.js`, `evolution-log.js`, `config.js`. Run with `npm test`.
+
+### Changed
+- `remember` and `process` skills now type-tag every captured fact and emit evidence in frontmatter.
+- `process` skill explicitly does NOT auto-trigger consolidation. Entity re-synthesis lives in the upcoming `/remember:evolve` skill (Phase 2).
+
+### Foundation for v2.2 (`evolve` skill)
+- This release ships the schema and helpers but no behavioural change. The `evolve` skill (consolidate / reflect / promote phases) lands in v2.2.
+
 ## [2.0.6] - 2026-02-20
 
 ### Added
