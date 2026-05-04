@@ -82,3 +82,14 @@ Only update multiple files when adding ACTUAL CONTENT (not just backlinks):
 
 - List all files created/updated
 - Confirm `[[wikilinks]]` added (Obsidian will handle backlinks)
+
+## Promotion Thresholds
+
+Used by `/remember:evolve` Phase 3 (deterministic — `scripts/promote.js`). Override defaults by adding the matching key to your own `REMEMBER.md ## Promotion Thresholds` section, or to `~/.local/state/remember/config.json` under `thresholds`.
+
+- `promotion_confidence: 0.85` — minimum confidence to pin a belief into `Persona.md ## Top Beliefs`
+- `promotion_sources: 5` — minimum independent sources contributing to a belief
+- `top_beliefs_n: 10` — maximum number of beliefs pinned to Persona
+- `stale_days: 90` — beliefs with no new evidence in this many days transition to `freshness: stale`
+- `consolidate_touches: 5` — number of new touches an entity must accumulate before re-consolidation kicks in
+- `auto_promote: true` — when `false`, `evolve` Phase 3 computes deltas but writes nothing
