@@ -120,3 +120,61 @@ test('validateFrontmatter: confidence out of range is invalid', () => {
   assert.equal(result.valid, false);
   assert.ok(result.errors.some(e => e.includes('confidence')));
 });
+
+test('validateFrontmatter: array input is rejected as not-an-object', () => {
+  const result = schema.validateFrontmatter(['type']);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('object')));
+});
+
+test('validateFrontmatter: null input is rejected as not-an-object', () => {
+  const result = schema.validateFrontmatter(null);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('object')));
+});
+
+test('validateFrontmatter: confidence=null on belief is rejected', () => {
+  const result = schema.validateFrontmatter({
+    type: 'belief',
+    confidence: null,
+    freshness: 'stable',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('confidence')));
+});
+
+test('validateFrontmatter: confidence boundary 0 and 1 are valid', () => {
+  const lower = schema.validateFrontmatter({ type: 'belief', confidence: 0, freshness: 'stable' });
+  assert.equal(lower.valid, true);
+  const upper = schema.validateFrontmatter({ type: 'belief', confidence: 1, freshness: 'stable' });
+  assert.equal(upper.valid, true);
+});
+
+test('validateFrontmatter: confidence below 0 is rejected', () => {
+  const result = schema.validateFrontmatter({
+    type: 'belief',
+    confidence: -0.1,
+    freshness: 'stable',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('confidence')));
+});
+
+test('detectType: decision markers beat belief markers when both appear', () => {
+  // Both "I think" (belief) and "we decided" (decision) match.
+  // detectType evaluates DECISION before BELIEF → world-fact wins.
+  assert.equal(
+    schema.detectType('I think we decided to use Postgres.'),
+    schema.TYPES.WORLD_FACT,
+  );
+});
+
+test('detectType: bare "is" no longer triggers observation', () => {
+  // After tightening ENTITY_MARKERS, plain declarations like
+  // "Postgres is faster" should NOT classify as observation.
+  // It should fall through to the WORLD_FACT default.
+  assert.equal(
+    schema.detectType('Postgres is faster than MySQL.'),
+    schema.TYPES.WORLD_FACT,
+  );
+});

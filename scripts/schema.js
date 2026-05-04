@@ -47,8 +47,11 @@ const EXPERIENCE_MARKERS = [
 ];
 
 const ENTITY_MARKERS = [
-  /\b(?:is|works as|lives in|leads|runs|owns)\b/i,
+  /\bworks as\b/i,
+  /\blives in\b/i,
   /\bbased in\b/i,
+  /\bleads (?:the |a )?(?:team|project|company|product)\b/i,
+  /\b(?:cofounder|founder|cto|ceo|director|manager) (?:of|at)\b/i,
 ];
 
 function detectType(text) {
@@ -68,7 +71,7 @@ const VALID_FRESHNESS = new Set(Object.values(FRESHNESS));
 
 function validateFrontmatter(meta) {
   const errors = [];
-  if (!meta || typeof meta !== 'object') {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) {
     return { valid: false, errors: ['frontmatter must be an object'] };
   }
 
@@ -83,9 +86,8 @@ function validateFrontmatter(meta) {
   }
 
   if (meta.confidence !== undefined) {
-    const c = Number(meta.confidence);
-    if (Number.isNaN(c) || c < 0 || c > 1) {
-      errors.push(`invalid confidence: "${meta.confidence}" (must be 0.0–1.0)`);
+    if (typeof meta.confidence !== 'number' || Number.isNaN(meta.confidence) || meta.confidence < 0 || meta.confidence > 1) {
+      errors.push(`invalid confidence: "${meta.confidence}" (must be a number 0.0–1.0)`);
     }
   }
 
