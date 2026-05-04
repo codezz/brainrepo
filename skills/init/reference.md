@@ -19,43 +19,39 @@ Write merged JSON back to settings file.
 
 ```markdown
 ---
+created: {{date}}
 updated: {{date}}
 tags: [persona, system]
 ---
 
 # Persona
 
-Best practices for working with {{name}}. Loaded at every session start. Updated by `/remember:process`.
+Loaded at every session start. Updated by the Remember plugin's evolution skills.
 
 ---
 
-## Identity
+## Mission
 
 - **Name:** {{name}}
 - **Timezone:** {{timezone}}
 - **Languages:** {{languages}}
+- **Role:** _to be filled in_
 
-## Communication
+## Directives
 
-_Patterns will be added as the AI learns your preferences._
+- _Hard rules and explicit preferences. Edit by hand or let `/remember:process` add observed patterns._
 
-## Workflow
+## Disposition
 
-_Patterns will be added as the AI learns your work style._
+- _Soft traits scored 1–5 (e.g. terseness:5, formality:2, risk-tolerance:4). Auto-updated by the `evolve` skill in Phase 2._
 
-## Decision-Making
+## Top Beliefs
 
-_Patterns will be added as the AI learns your decision patterns._
-
-## Code Style
-
-_Patterns will be added as the AI learns your coding preferences._
-
----
+- _Auto-managed by the `evolve` skill (Phase 3 promotion). Empty until first run._
 
 ## Evidence Log
 
-_Patterns observed across sessions. Newest first._
+- _Append-only behavioural evidence with `[{date}]` prefix and confidence score._
 ```
 
 ---
