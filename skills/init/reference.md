@@ -39,19 +39,15 @@ Loaded at every session start. Updated by the Remember plugin's evolution skills
 
 ## Directives
 
-- _Hard rules and explicit preferences. Edit by hand or let `/remember:process` add observed patterns._
-
-## Disposition
-
-- _Soft traits scored 1–5 (e.g. terseness:5, formality:2, risk-tolerance:4). Auto-updated by the `evolve` skill in Phase 2._
+- _Hard rules and explicit preferences. Edit by hand. The plugin never overwrites this section._
 
 ## Top Beliefs
 
-- _Auto-managed by the `evolve` skill (Phase 3 promotion). Empty until first run._
+- _Auto-managed by promote.js (runs after every capture). Empty until your first explicit `remember this:` lands a belief that meets the threshold._
 
 ## Evidence Log
 
-- _Append-only behavioural evidence with `[{date}]` prefix and confidence score._
+- _Append-only behavioural evidence with `[{date}]` prefix._
 ```
 
 ---

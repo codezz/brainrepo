@@ -8,11 +8,33 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { getBrainRoot, parseFrontmatter, loadEvolutionConfig } = require('./config');
-const { TYPES, FRESHNESS } = require('./schema');
+const { TYPES, FRESHNESS, BOOTSTRAP_THRESHOLDS } = require('./schema');
 const evolutionLog = require('./evolution-log');
 
 const TOP_BELIEFS_HEADING = '## Top Beliefs';
 const ELIGIBLE_FRESHNESS = new Set([FRESHNESS.STABLE, FRESHNESS.STRENGTHENING]);
+
+// Decide which thresholds apply: bootstrap (relaxed) when the brain is
+// young (`beliefs.length < bootstrap_max_beliefs`), normal otherwise.
+// Bootstrap takes the more permissive value per-field so a user who has
+// explicitly relaxed thresholds in their config keeps their setting.
+function effectiveThresholds(beliefsCount, config) {
+  const cfg = config.thresholds;
+  if (config.bootstrap === false) {
+    return { thresholds: cfg, bootstrap: false };
+  }
+  if (beliefsCount >= BOOTSTRAP_THRESHOLDS.bootstrap_max_beliefs) {
+    return { thresholds: cfg, bootstrap: false };
+  }
+  return {
+    thresholds: {
+      ...cfg,
+      promotion_confidence: Math.min(cfg.promotion_confidence, BOOTSTRAP_THRESHOLDS.promotion_confidence),
+      promotion_sources: Math.min(cfg.promotion_sources, BOOTSTRAP_THRESHOLDS.promotion_sources),
+    },
+    bootstrap: true,
+  };
+}
 
 function findBeliefs(brain) {
   const notesDir = path.join(brain, 'Notes');
@@ -74,9 +96,12 @@ function readCurrentTopBeliefs(personaPath) {
   return links;
 }
 
-function renderTopBeliefsSection(top) {
+function renderTopBeliefsSection(top, { bootstrap = false, beliefsCount = 0, thresholds = null } = {}) {
   if (!top.length) {
-    return `${TOP_BELIEFS_HEADING}\n\n_None yet — run \`/remember:evolve\` after capturing more beliefs._\n`;
+    const conf = thresholds ? thresholds.promotion_confidence : 0.85;
+    const src = thresholds ? thresholds.promotion_sources : 5;
+    const mode = bootstrap ? ' (bootstrap mode)' : '';
+    return `${TOP_BELIEFS_HEADING}\n\n_None yet — need beliefs with conf≥${conf} and sources≥${src}${mode}. Currently ${beliefsCount} belief(s) in brain._\n`;
   }
   const items = top.map((b, i) =>
     `${i + 1}. [[${b.path}]] — conf=${b.confidence.toFixed(2)} sources=${b.sources_count} freshness=${b.freshness}`,
@@ -84,9 +109,9 @@ function renderTopBeliefsSection(top) {
   return `${TOP_BELIEFS_HEADING}\n\n${items.join('\n')}\n`;
 }
 
-function writeTopBeliefs(personaPath, top) {
+function writeTopBeliefs(personaPath, top, opts = {}) {
   let text = fs.existsSync(personaPath) ? fs.readFileSync(personaPath, 'utf-8') : '';
-  const newSection = renderTopBeliefsSection(top);
+  const newSection = renderTopBeliefsSection(top, opts);
 
   const headingRe = /^## Top Beliefs[ \t]*$/m;
   const match = text.match(headingRe);
@@ -119,28 +144,34 @@ function run({ brain = null, dryRun = false, configOverride = null, logPath = nu
   const config = configOverride || loadEvolutionConfig();
 
   const beliefs = findBeliefs(brainRoot);
-  const candidates = filterCandidates(beliefs, config.thresholds);
-  const top = rankAndTake(candidates, config.thresholds.top_beliefs_n);
+  const { thresholds: effective, bootstrap } = effectiveThresholds(beliefs.length, config);
+  const candidates = filterCandidates(beliefs, effective);
+  const top = rankAndTake(candidates, effective.top_beliefs_n);
   const currentLinks = readCurrentTopBeliefs(personaPath);
   const { promoted, demoted } = computeDeltas(currentLinks, top);
 
   const willWrite = !dryRun && config.auto_promote && fs.existsSync(personaPath);
 
   if (willWrite) {
-    writeTopBeliefs(personaPath, top);
+    writeTopBeliefs(personaPath, top, {
+      bootstrap,
+      beliefsCount: beliefs.length,
+      thresholds: effective,
+    });
 
     const logOpts = logPath ? { logPath } : {};
+    const tag = bootstrap ? ' [bootstrap]' : '';
     for (const p of promoted) {
       evolutionLog.appendEvent(
         'PROMOTE',
-        `${p.path} → Persona.Top conf=${p.confidence.toFixed(2)} sources=${p.sources_count}`,
+        `${p.path} → Persona.Top conf=${p.confidence.toFixed(2)} sources=${p.sources_count}${tag}`,
         logOpts,
       );
     }
     for (const d of demoted) {
       evolutionLog.appendEvent(
         'DEMOTE',
-        `${d} ← Persona.Top reason=below_threshold`,
+        `${d} ← Persona.Top reason=below_threshold${tag}`,
         logOpts,
       );
     }
@@ -153,6 +184,8 @@ function run({ brain = null, dryRun = false, configOverride = null, logPath = nu
     beliefsCount: beliefs.length,
     candidatesCount: candidates.length,
     wrote: willWrite,
+    bootstrap,
+    effectiveThresholds: effective,
   };
 }
 
@@ -165,6 +198,7 @@ module.exports = {
   renderTopBeliefsSection,
   writeTopBeliefs,
   computeDeltas,
+  effectiveThresholds,
   run,
 };
 
@@ -173,6 +207,10 @@ if (require.main === module) {
   const dryRun = args.includes('--dry-run');
   const result = run({ dryRun });
   process.stdout.write(`Beliefs: ${result.beliefsCount}\n`);
+  process.stdout.write(`Mode: ${result.bootstrap ? 'bootstrap (relaxed thresholds)' : 'normal'}\n`);
+  process.stdout.write(
+    `Thresholds: conf>=${result.effectiveThresholds.promotion_confidence} sources>=${result.effectiveThresholds.promotion_sources}\n`,
+  );
   process.stdout.write(`Above threshold: ${result.candidatesCount}\n`);
   process.stdout.write(`Top: ${result.top.length}\n`);
   process.stdout.write(`Promoted: ${result.promoted.length}\n`);

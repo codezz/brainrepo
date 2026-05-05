@@ -75,11 +75,11 @@ Plugin state (audit log, thresholds) lives at `~/.local/state/remember/` — out
 
 | Command | What it does |
 |---------|-------------|
+| `/remember:init` | Initialize your second brain structure (run once) |
 | `remember this: ...` | Instant capture — routes to the right place automatically |
-| `/remember:process` | Extract knowledge from past AI sessions into your brain |
-| `/remember:evolve` | Re-synthesize entities, reflect on beliefs, pin top beliefs to Persona |
 | `/remember:status` | Show brain stats — file counts, freshness, top beliefs |
-| `/remember:init` | Initialize your second brain structure |
+| `/remember:process` | Optional. Extract knowledge from past AI sessions into your brain |
+| `/remember:evolve` | Periodic (weekly recommended). LLM-driven brain evolution — entity profile synthesis, belief confidence re-scoring, stale detection. Schedule via `/loop 7d /remember:evolve` |
 
 ---
 
@@ -118,15 +118,21 @@ Captured facts aren't static. The brain has three layers and an epistemic schema
 - **L2 — Curate** — `Notes/`, `People/`, `Projects/`, `Areas/`. Each fact is tagged as `world-fact`, `belief`, `observation`, or `experience`, with evidence and a freshness trend.
 - **L3 — Pinned** — `Persona.md`. Always loaded; auto-managed top beliefs.
 
-Run `/remember:evolve` weekly (manually or via `/loop 7d /remember:evolve`) to:
+Evolution happens in two layers:
 
-1. **Consolidate** — re-synthesize People / Project / Area profiles from accumulated mentions
-2. **Reflect** — re-score belief confidence, mark contradictions, flag stale items
-3. **Promote** — pin the top beliefs to `Persona.md` based on configurable thresholds
+**Always-on (zero effort, runs at capture time):**
+- **Auto-promote** runs after every capture — `Persona.md ## Top Beliefs` is always in sync with the strongest beliefs in your brain. Pure deterministic, zero LLM cost.
+- **Contradictions** are detected and routed to `counter_evidence:` in real time during capture (Step 3.6 of the `remember` skill). Freshness flips to `contradicted` automatically when counter outweighs supporting evidence.
+- **Bootstrap thresholds** make sure your very first explicit capture lands in Persona, even before you accumulate the standard threshold of evidence.
 
-Every auto-change is logged to `~/.local/state/remember/evolution.log` — fully auditable, fully reversible (it's all markdown + git). `tail` it any time to see what the brain did on its own.
+**Periodic (run `/remember:evolve`, weekly recommended):**
+- **Consolidate** — re-synthesize People/Project/Area profiles from accumulated mentions. Without this, entity files become log-only and never get the overview that makes them useful.
+- **Reflect** — re-score belief confidence based on accumulated evidence vs. counter-evidence; mark beliefs `stale` after `stale_days` (default 90) without new evidence.
+- **Promote** — also runs here, usually a no-op because auto-promote already kept Top Beliefs current.
 
-### Schedule with `/loop`
+The always-on layer keeps the brain functional from day one. The periodic layer is what makes the brain actually *evolve* over time — refined beliefs, synthesized profiles, retired stale ideas. Skipping `/remember:evolve` indefinitely means the brain accumulates without rephrasing itself.
+
+### Schedule with `/loop` (recommended)
 
 ```
 /loop 7d /remember:evolve
@@ -163,6 +169,18 @@ Available default sections (see plugin's `REMEMBER.md`): `Routing`, `Task Routin
 
 For full documentation, see [REMEMBER.md Guide](docs/REMEMBER-md-guide.md).
 
+### Runtime config
+
+A few knobs live outside `REMEMBER.md` because they control plugin runtime, not capture routing. Edit `config.defaults.json` (plugin-wide) or pass overrides via `~/.local/state/remember/config.json`:
+
+| Key | Default | What it does |
+|---|---|---|
+| `session.passive_nudge` | `true` | At session start, ask the AI to detect — semantically, in any language — when you reveal a stable preference, decision, or recurring pattern, and to suggest capture once per topic with `💡 Want me to remember this?`. The AI never auto-saves; you confirm with the next message. Set to `false` to require explicit `remember this:` for every capture. |
+| `session.load_persona` | `true` | Inject `Persona.md` at every session start. Disable if you want a clean context. |
+| `thresholds.promotion_confidence` | `0.85` | Confidence floor for a belief to pin into `Persona.md ## Top Beliefs`. |
+| `thresholds.promotion_sources` | `5` | Independent-source floor for the same. |
+| `bootstrap` | `true` | Cold-start mode: while total beliefs < 20, relax thresholds to `conf ≥ 0.7` and `sources ≥ 1` so the very first explicit capture lands in Persona. Set `false` to apply normal thresholds from day one. |
+
 ---
 
 ## Privacy & Portability
@@ -192,11 +210,14 @@ A: No, but Obsidian gives the best experience — graph view, backlinks, search.
 **Q: How does it learn my coding patterns?**
 A: Persona.md captures your code style, naming conventions, and workflow preferences over time. It's loaded at the start of every session so your AI knows how you work.
 
-**Q: What does `/remember:evolve` actually do?**
-A: Three phases. (1) Re-synthesizes entity profiles (People/Projects/Areas) from accumulated mentions. (2) Re-scores belief confidence based on evidence vs counter-evidence and marks freshness (stable/strengthening/weakening/stale/contradicted). (3) Pins top beliefs to `Persona.md ## Top Beliefs` based on configurable thresholds (default: confidence ≥ 0.85, sources ≥ 5). Phase 3 is deterministic and runs without LLM calls — cheap to cron. Configure thresholds in `~/.local/state/remember/config.json` or your `REMEMBER.md`.
+**Q: Do I need to run `/remember:evolve` manually?**
+A: The deterministic parts (promoting top beliefs, flipping freshness on contradictions) run automatically after every capture — that part is hands-off. But the LLM-driven parts (re-synthesizing People/Project/Area profiles, re-scoring belief confidence, marking stale beliefs) only happen when you run `/remember:evolve`. Recommended cadence is weekly via `/loop 7d /remember:evolve`. Skip it indefinitely and the brain accumulates without ever rephrasing itself — usable, but stagnant.
 
-**Q: Will `/remember:evolve` overwrite my hand-curated Persona?**
-A: No. It only manages the `## Top Beliefs` section by reference (wikilinks, not copies). Mission, Directives, Disposition, and Evidence Log stay in your hands. To turn off auto-promotion entirely: set `auto_promote: false` in `~/.local/state/remember/config.json`.
+**Q: What does `/remember:evolve` actually do when I run it?**
+A: Three phases. (1) Re-synthesizes entity profiles (People/Projects/Areas) from accumulated mentions. (2) Re-scores belief confidence based on evidence vs counter-evidence and marks freshness (stable/strengthening/weakening/stale/contradicted). (3) Promotes top beliefs into `Persona.md ## Top Beliefs` — usually a no-op because auto-promote already ran at capture time. Configure thresholds in `~/.local/state/remember/config.json` or your `REMEMBER.md`.
+
+**Q: Will the brain overwrite my hand-curated Persona?**
+A: No. The plugin only manages `## Top Beliefs` (by reference — wikilinks, not copies). Mission, Directives, and Evidence Log stay in your hands. To turn off auto-promotion entirely: set `auto_promote: false` in `~/.local/state/remember/config.json`.
 
 **Q: Where's the audit trail?**
 A: `~/.local/state/remember/evolution.log` — append-only, ISO-timestamped, one line per auto-change. Tail it whenever you want to see what the brain did on its own. Run `/remember:status` to see the latest entries inline.

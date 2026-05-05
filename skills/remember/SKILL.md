@@ -97,19 +97,50 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js find-similar {brain} <slug
 
 Or for world-fact: pass `world-fact` as the type filter.
 
-If a similar file is returned, append evidence instead of creating a duplicate:
+**If no similar file → proceed to Step 4 (Write new).**
 
-```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js append <filepath> '{"source":"Journal/<TODAY>.md","quote":"<verbatim>","date":"<TODAY>"}'
-```
+**If a similar file is returned → run the polarity check (Step 3.6) BEFORE appending.**
 
-This:
-- increments `sources_count`
-- appends the new entry to the `evidence:` array
-- updates `updated:` to today
-- refuses duplicate sources (idempotent)
+### Step 3.6: Polarity check (only when Step 3.5 found a similar belief)
 
-If no similar file → proceed to Step 4 (Write new).
+Read the existing file (its body + the `evidence:` array). Compare the new claim's stance to the existing belief's stance. There are exactly three outcomes:
+
+1. **Same direction (re-affirms existing belief)** → append as positive evidence:
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js append <filepath> '{"source":"Journal/<TODAY>.md","quote":"<verbatim>","date":"<TODAY>"}'
+   ```
+   This increments `sources_count`, appends to `evidence:`, updates `updated:`, refuses duplicate sources (idempotent).
+
+2. **Opposite direction (contradicts existing belief)** → append as counter-evidence and log the event:
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js append-counter <filepath> '{"source":"Journal/<TODAY>.md","quote":"<verbatim>","date":"<TODAY>"}'
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/evolution-log.js CONTRADICT "<filepath> counter from Journal/<TODAY>.md"
+   ```
+   The first command appends to `counter_evidence:`, leaves `sources_count` untouched, and **automatically flips `freshness: contradicted`** when counter entries outnumber positive ones. The second writes a `CONTRADICT` line to `~/.local/state/remember/evolution.log` for audit.
+
+3. **Unrelated (different topic, fuzzy match was wrong)** → ignore the find-similar match and create a new file via Step 4.
+
+#### Polarity rules — apply in order, first match wins
+
+- **Explicit negation of the existing claim** (e.g. existing: *"prefer Postgres for small projects"*, new: *"actually SQLite is better for small projects"*) → counter.
+- **Reversal of preference** (existing: *"X over Y"*, new: *"Y over X"*) → counter.
+- **Same subject, opposite verdict** (existing: *"Redis is overkill for X"*, new: *"Redis is the right call for X"*) → counter.
+- **Restatement, paraphrase, or new evidence in the same direction** → positive.
+- **Adjacent topic, same domain, neither confirms nor contradicts** → ignore find-similar; create a new note.
+- **You are not at least 80% confident the polarity is opposite** → default to positive evidence. Don't guess.
+
+#### Worked examples
+
+- Existing `Notes/pref-postgres.md` (belief, "prefer Postgres for small projects, avoid Redis").
+  - New: *"going with Postgres for the dollie project"* → **positive** (same direction, new instance).
+  - New: *"actually SQLite is better than Postgres for small projects"* → **counter** (explicit reversal).
+  - New: *"Redis works great for the dollie cache layer"* → **ignore** find-similar (different subject — Redis-as-cache vs Postgres-as-DB are not the same belief).
+
+- Existing `Notes/pref-async-comms.md` (belief, "prefer async comms over meetings").
+  - New: *"meetings are essential for kickoffs"* → **counter only if existing belief is unconditional**; if the existing belief already excludes kickoffs, treat as **ignore**.
+  - New: *"Slack > meetings for status updates"* → **positive** (paraphrase).
+
+If polarity is genuinely ambiguous, default to positive evidence and add a brief note in the chat confirmation so the user can re-route manually. Never guess "counter" — false contradictions corrupt the brain faster than missed ones.
 
 ### Step 4: Route & Write
 
@@ -122,7 +153,17 @@ Use `[[wikilinks]]` everywhere. Link forward; Obsidian handles backlinks.
 
 See `reference.md` for detailed templates and routing tables.
 
-### Step 5: Confirm
+### Step 5: Auto-promote (deterministic, every capture)
+
+After all writes are done, run promote.js once. It is deterministic, fast, and zero LLM cost — so it can run on every capture without any user opt-in. This keeps `Persona.md ## Top Beliefs` in sync with the brain in real time.
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/promote.js
+```
+
+The script no-ops if nothing crossed the threshold. If something promoted or demoted, surface the delta in Step 6.
+
+### Step 6: Confirm
 
 ```
 ✅ Brain updated:
@@ -130,7 +171,13 @@ See `reference.md` for detailed templates and routing tables.
   - Created Notes/decision-nextjs.md
   - Updated Tasks/tasks.md (+1 Focus)
   - Updated Journal/2026-02-15.md (+1 section)
+  - Notes/pref-postgres.md (+counter_evidence — freshness flipped to contradicted)
+  - Persona.md ## Top Beliefs: +1 promoted ([[Notes/pref-async-comms.md]])
 ```
+
+If a polarity decision was non-obvious (close call between positive and counter), say so in the confirmation so the user can correct it before the next capture.
+
+If the auto-promote step skipped writing (e.g. `auto_promote: false` in user's config, or no Persona.md), don't bother mentioning it — silent no-op is the right UX.
 
 ---
 
@@ -163,7 +210,7 @@ See `reference.md` for detailed templates and routing tables.
 - **`source:` MUST be a real file path inside the brain** — typically `Journal/<SESSION_DATE>.md` (the journaled capture from Step 2.4). Never invent paths like `chat/...`, `session/...`, or anything that doesn't exist on disk.
 - For `type: belief`, `confidence: 0.0–1.0` is REQUIRED.
 - `freshness: stable` is the default for new captures. The `evolve` skill (Phase 2) updates this later.
-- Never overwrite L2 files. Append evidence; if a contradiction emerges, write to `counter_evidence` (the `evolve` skill handles this in Phase 2 — for live capture, just append normally).
+- Never overwrite L2 files. New positive evidence → `evidence:`. New contradicting claim → `counter_evidence:`. Polarity is decided live in Step 3.6 — don't defer to `/remember:evolve`.
 
 ## Validate after write
 

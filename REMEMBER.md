@@ -93,3 +93,13 @@ Used by `/remember:evolve` Phase 3 (deterministic — `scripts/promote.js`). Ove
 - `stale_days: 90` — beliefs with no new evidence in this many days transition to `freshness: stale`
 - `consolidate_touches: 5` — number of new touches an entity must accumulate before re-consolidation kicks in
 - `auto_promote: true` — when `false`, `evolve` Phase 3 computes deltas but writes nothing
+
+### Bootstrap (cold-start) thresholds
+
+A fresh brain rarely accumulates 5 sources × 0.85 confidence on a single belief in the first weeks, so promote.js applies relaxed thresholds while the brain has fewer than `bootstrap_max_beliefs` total beliefs. Disable with `bootstrap: false` in `~/.local/state/remember/config.json`.
+
+- `bootstrap.promotion_confidence: 0.7` — relaxed confidence floor while bootstrapping
+- `bootstrap.promotion_sources: 1` — single explicit capture is enough; ranking still rewards repetition via the score formula
+- `bootstrap.bootstrap_max_beliefs: 20` — once total beliefs reach this, defaults take over
+
+Bootstrap takes the more permissive of (your config, bootstrap defaults) per field — explicit user overrides are never made stricter by bootstrap.

@@ -27,9 +27,9 @@ function loadConfig({ forceReload = false } = {}) {
         brain_dump_keywords: [
           'save this', 'remember this', 'brain dump', 'note to self',
           'capture this', 'save to brain', 'write to brain', 'add to brain',
-          'salvează', 'notează', 'reține',
         ],
         load_persona: true,
+        passive_nudge: true,
       },
       extract: {
         max_assistant_text_len: 500,

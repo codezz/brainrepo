@@ -75,7 +75,7 @@ test('inferExpectedSchema: Persona.md → persona-sections', () => {
   const brain = freshBrain();
   const expected = schema.inferExpectedSchema(path.join(brain, 'Persona.md'), { brainRoot: brain });
   assert.equal(expected.kind, 'persona-sections');
-  assert.deepEqual(expected.requiredSections, ['Mission', 'Directives', 'Disposition', 'Top Beliefs', 'Evidence Log']);
+  assert.deepEqual(expected.requiredSections, ['Mission', 'Directives', 'Top Beliefs', 'Evidence Log']);
   fs.rmSync(brain, { recursive: true, force: true });
 });
 
@@ -188,10 +188,9 @@ test('validateAndUpgrade: Persona missing section gets placeholder appended', ()
 
   const result = schema.validateAndUpgrade(file, { brainRoot: brain });
   assert.equal(result.changed, true);
-  assert.deepEqual(result.addedSections.sort(), ['Disposition', 'Top Beliefs']);
+  assert.deepEqual(result.addedSections.sort(), ['Top Beliefs']);
 
   const after = fs.readFileSync(file, 'utf-8');
-  assert.match(after, /^## Disposition\b/m);
   assert.match(after, /^## Top Beliefs\b/m);
 
   fs.rmSync(brain, { recursive: true, force: true });
@@ -202,12 +201,29 @@ test('validateAndUpgrade: Persona with all sections present is no-op', () => {
   const file = path.join(brain, 'Persona.md');
   writeFile(
     file,
-    '# Persona\n\n## Mission\n- x\n\n## Directives\n- y\n\n## Disposition\n- z\n\n## Top Beliefs\n- a\n\n## Evidence Log\n- b\n',
+    '# Persona\n\n## Mission\n- x\n\n## Directives\n- y\n\n## Top Beliefs\n- a\n\n## Evidence Log\n- b\n',
   );
 
   const result = schema.validateAndUpgrade(file, { brainRoot: brain });
   assert.equal(result.changed, false);
   assert.deepEqual(result.addedSections, []);
+
+  fs.rmSync(brain, { recursive: true, force: true });
+});
+
+test('validateAndUpgrade: Persona with legacy Disposition section is preserved (no-op)', () => {
+  const brain = freshBrain();
+  const file = path.join(brain, 'Persona.md');
+  writeFile(
+    file,
+    '# Persona\n\n## Mission\n- x\n\n## Directives\n- y\n\n## Disposition\n- terseness: 5\n\n## Top Beliefs\n- a\n\n## Evidence Log\n- b\n',
+  );
+
+  // Legacy Disposition section should not be removed by upgrade — user keeps what they wrote.
+  const result = schema.validateAndUpgrade(file, { brainRoot: brain });
+  assert.equal(result.changed, false);
+  const after = fs.readFileSync(file, 'utf-8');
+  assert.match(after, /^## Disposition\b/m);
 
   fs.rmSync(brain, { recursive: true, force: true });
 });

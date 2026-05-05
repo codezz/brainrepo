@@ -3,15 +3,22 @@ name: remember:evolve
 description: Evolve the brain — consolidate entities, reflect on beliefs, promote top beliefs to Persona. Run weekly or on demand.
 ---
 
-# /remember:evolve — Evolve the Brain
+# /remember:evolve — Evolve the Brain (periodic, weekly recommended)
 
-Single weekly/monthly entry point that runs three phases internally:
+The deeper LLM-driven evolution layer. The deterministic Phase 3 (promote) runs automatically after every capture — that keeps `Persona.md ## Top Beliefs` current in real time. This skill is what does the work that promote alone *can't*: re-synthesizing entity profiles, re-scoring belief confidence semantically, marking stale beliefs that should retire.
 
-1. **Consolidate** (LLM) — re-synthesize entity profiles (`People/`, `Projects/`, `Areas/`) from accumulated facts and beliefs
+Without periodic evolution, the brain becomes append-only:
+- `People/`, `Projects/`, `Areas/` files accumulate log entries but never get a refreshed `## Profile` overview
+- Beliefs keep their initial confidence forever, even after 15 supporting captures that should push them to 0.95
+- 6-month-old beliefs with no new evidence stay marked `stable` instead of `stale`
+
+Three phases:
+
+1. **Consolidate** (LLM) — re-synthesize entity profiles from accumulated facts and beliefs
 2. **Reflect** (LLM) — re-evaluate beliefs against evidence, update confidence and freshness, mark contradictions
-3. **Promote** (deterministic, no LLM) — pin top beliefs into `Persona.md ## Top Beliefs` based on configured thresholds
+3. **Promote** (deterministic, no LLM) — also runs here, usually a no-op because auto-promote already kept Top Beliefs current
 
-Cron-able via `/loop 7d /remember:evolve`. Idempotent.
+Recommended cadence: `/loop 7d /remember:evolve` (weekly) or `/loop 30d /remember:evolve` (monthly). Idempotent — safe to run any time.
 
 After each Phase that writes (Phase 1 entity re-synthesis, Phase 2 belief frontmatter updates, Phase 3 Persona.md update via `promote.js`), call `node ${CLAUDE_PLUGIN_ROOT}/scripts/schema.js validate <filepath>` on the touched files. Surface its `warnings` (e.g. *"confidence defaulted to 0.5 — review"*) in your final report.
 
@@ -174,6 +181,8 @@ Phase 2 — Reflect
   - {N} contradicted
 
 Phase 3 — Promote
+  Mode: {bootstrap | normal}  (bootstrap is in effect while total beliefs < 20)
+  Effective thresholds: conf>={c} sources>={s}
   Top {N} beliefs pinned to Persona.md.
   Promoted: {N}
   - [[Notes/x.md]] conf=0.91 sources=8

@@ -7,10 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [2.4.0] - 2026-05-05
 
-- **Default rulebook moved to plugin-root `REMEMBER.md`** (was `assets/templates/brain-dump-context.md`).
-  - Plugin defaults and user customizations now share the same section format (`## Section Name`).
+UX-first release. Closes the gaps the v2.3 product review surfaced: empty Top Beliefs for new users, false promises in the Persona template, contradictions detected but never routed, and a confusing "you must run cron" mental model.
+
+### Added — Bootstrap thresholds
+
+- **`scripts/schema.js`** exports `BOOTSTRAP_THRESHOLDS` — relaxed thresholds (`promotion_confidence: 0.7`, `promotion_sources: 1`) applied while total beliefs in the brain are below `bootstrap_max_beliefs` (default 20).
+- **`scripts/promote.js`** — new `effectiveThresholds(beliefsCount, config)` helper. Bootstrap mode kicks in automatically for cold-start brains so the very first explicit `remember this:` capture lands in `Persona.md ## Top Beliefs`. Bootstrap takes the more permissive of (user config, bootstrap defaults) per field — explicit user overrides are never made stricter. Disable with `bootstrap: false` in `~/.local/state/remember/config.json`.
+- Empty placeholder in Persona now states the *current* threshold and brain size (e.g. *"need conf≥0.7 sources≥1 (bootstrap mode). Currently 3 belief(s) in brain."*) so users see why nothing pinned yet.
+- 6 new tests, total 83 / 0 fail.
+
+### Added — Auto-promote at capture time
+
+- `skills/remember/SKILL.md` Step 5 + `skills/process/SKILL.md` Step 6 — `promote.js` now runs at the end of every `remember this:` capture and once per `/remember:process` batch. `Persona.md ## Top Beliefs` stays in sync in real time, no cron required for the deterministic layer.
+- `/remember:evolve` is now correctly framed as the *periodic* LLM-driven layer (entity profile re-synthesis, belief confidence re-scoring, stale detection) — recommended weekly via `/loop 7d /remember:evolve` for brains that should keep evolving past auto-promote.
+
+### Added — AI-driven passive capture nudge
+
+- `scripts/session_start.js` — when `session.passive_nudge: true` (default), injects a session-start instruction asking the AI to detect — semantically, in any language — moments when the user reveals a stable preference, decision, or recurring pattern, and to suggest capture once per topic. The AI never auto-saves; the user confirms with the next message. Replaces brittle regex-based detection.
+- Disable with `passive_nudge: false` in `config.defaults.json` or `REMEMBER.md`.
+
+### Added — Contradiction detection at capture time
+
+- **`scripts/append-evidence.js`** — new `appendCounterEvidence(filepath, entry)` function. Appends to `counter_evidence:`, leaves `sources_count` untouched, and **automatically flips `freshness: contradicted`** when counter entries outnumber positive ones. CLI: `node append-evidence.js append-counter`.
+- `skills/remember/SKILL.md` Step 3.6 + `skills/process/SKILL.md` Step 4b.7 — explicit polarity check after dedup. Three branches: same direction (positive evidence), opposite direction (counter + `CONTRADICT` log), unrelated (ignore find-similar). Includes worked examples and explicit "don't guess counter — false contradictions corrupt the brain faster than missed ones" rule.
+- 4 new tests for `appendCounterEvidence` (idempotency, freshness flip, missing block init, duplicate source refusal).
+
+### Added — Backup nudge in `/remember:status`
+
+- `skills/status/SKILL.md` Step 5 — checks if `{brain}/.git/` exists. If missing, surfaces a non-blocking warning at the end of stats output suggesting `git init && git commit`. If present, shows `Backup: ✅ git-tracked` (with uncommitted-file count when relevant).
+
+### Removed — Persona Disposition section
+
+- Disposition was claimed in the template to be *"auto-managed by `/remember:evolve` Phase 2"* but no codepath ever wrote to it. Removed from the init template, `PERSONA_SECTIONS` constant, and the schema-upgrade placeholders. Existing user Personas with a `## Disposition` section are preserved untouched (`validateAndUpgrade` is non-destructive on legacy sections).
+- Persona now ships with four canonical sections: Mission, Directives, Top Beliefs, Evidence Log.
+
+### Changed — keyword set is now English-only by default
+
+- `config.defaults.json` brain-dump keywords reduced to English: `save this`, `remember this`, `brain dump`, `note to self`, `capture this`, `save to brain`, `write to brain`, `add to brain`. The AI nudge replaces hardcoded multilingual keyword detection (e.g. Romanian `salvează`, `notează`, `reține`). Users wanting their language as a hard keyword can append it via `## Override: Capture Rules` in their `REMEMBER.md`.
+- `scripts/config.js` fallback synced to match.
+
+### Changed — README
+
+- Commands table re-ordered: `init` first, `remember this:` second, `status` third. `process` and `evolve` clearly marked as their cadence (one-off, periodic).
+- Self-evolving brain section split into "Always-on (zero effort)" + "Periodic (run `/remember:evolve`)" with concrete consequences of skipping the periodic layer.
+- New runtime config table documenting `passive_nudge`, `load_persona`, `bootstrap`, and the promotion thresholds.
+- FAQ honest about the always-on / periodic split.
+
+### Changed — Default rulebook moved to plugin-root `REMEMBER.md` (was `assets/templates/brain-dump-context.md`)
+
+- Plugin defaults and user customizations now share the same section format (`## Section Name`).
   - User `REMEMBER.md` sections with the same name as a default are **appended** to the default.
   - User sections named `## Override: <Name>` **fully replace** the matching default.
   - User sections that don't match any default are passed through verbatim at the end.

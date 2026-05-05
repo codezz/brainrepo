@@ -27,7 +27,26 @@ const DEFAULT_THRESHOLDS = Object.freeze({
   top_beliefs_n: 10,
 });
 
-const PERSONA_SECTIONS = Object.freeze(['Mission', 'Directives', 'Disposition', 'Top Beliefs', 'Evidence Log']);
+// Cold-start: relaxed thresholds applied when total beliefs in the brain
+// are below `bootstrap_max_beliefs`. Without this, a fresh brain never has
+// anything in `Persona.md ## Top Beliefs` because reaching 5 sources × 0.85
+// confidence on a single belief takes weeks of disciplined capture.
+//
+// `promotion_sources: 1` is intentional — when the user explicitly captures
+// with `remember this: ...`, they've already opted in. Requiring two
+// captures of the same idea before it counts is patronising. Ranking still
+// rewards repetition via `confidence × log(sources_count + 1)`.
+//
+// Bootstrap takes the MORE permissive of (user_config, bootstrap_defaults)
+// — user can never accidentally make bootstrap stricter than intended.
+// Disable entirely with `bootstrap: false` in the evolution config.
+const BOOTSTRAP_THRESHOLDS = Object.freeze({
+  promotion_confidence: 0.7,
+  promotion_sources: 1,
+  bootstrap_max_beliefs: 20,
+});
+
+const PERSONA_SECTIONS = Object.freeze(['Mission', 'Directives', 'Top Beliefs', 'Evidence Log']);
 
 const BELIEF_MARKERS = [
   /\bprefer(?:s|red|ence)?\b/i,
@@ -297,9 +316,8 @@ function appendMissingPersonaSections(text, requiredSections) {
 
   const placeholders = {
     Mission: '_to be filled in (Name / Timezone / Languages / Role)_',
-    Directives: '_Hard rules and explicit preferences. Edit by hand or let `/remember:process` add observed patterns._',
-    Disposition: '_Soft traits scored 1–5. Auto-updated by `/remember:evolve` Phase 2 as evidence accumulates._',
-    'Top Beliefs': '_Auto-managed by `/remember:evolve` Phase 3. Empty until first run._',
+    Directives: '_Hard rules and explicit preferences. Edit by hand. The plugin never overwrites this section._',
+    'Top Beliefs': '_Auto-managed by promote.js (runs after every capture). Empty until your first belief meets the threshold._',
     'Evidence Log': '_Append-only behavioural evidence with `[{date}]` prefix._',
   };
 
@@ -359,6 +377,7 @@ module.exports = {
   TYPES,
   FRESHNESS,
   DEFAULT_THRESHOLDS,
+  BOOTSTRAP_THRESHOLDS,
   PERSONA_SECTIONS,
   detectType,
   validateFrontmatter,

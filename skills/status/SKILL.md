@@ -51,6 +51,30 @@ List recently modified files (last 7 days) across People/, Projects/, Journal/, 
 
 Read `{brain_path}/Persona.md` and show a brief summary of captured patterns.
 
+### 5. Backup health check
+
+Check if `{brain_path}/.git/` exists (use `LS` tool on `{brain_path}/.git`):
+
+- **Exists** → show `Backup: ✅ git-tracked`. If you want to be helpful, also run `git -C {brain_path} status --porcelain | wc -l` and surface uncommitted-file count if > 0 (e.g. `Backup: ✅ git-tracked · 12 uncommitted files — consider committing`).
+- **Missing** → show a warning block at the end of the output:
+
+  ```
+  ⚠️  Backup: NOT git-tracked
+
+  Your brain lives at {brain_path} but has no git history. A single bad
+  capture or accidental delete could lose months of work.
+
+  Recommended:
+    cd {brain_path}
+    git init
+    git add .
+    git commit -m "initial brain snapshot"
+
+  (Optional) push to a private GitHub repo for off-machine backup.
+  ```
+
+This is non-blocking — never refuse to show stats just because backup is missing.
+
 ## What to show
 
 ````
@@ -84,6 +108,8 @@ Top 5 beliefs by confidence:
 Recent evolution.log (last 5 entries):
   {timestamp}  {TYPE}  {message}
   ...
+
+Backup: ✅ git-tracked    (or)    ⚠️  NOT git-tracked — see warning below
 ````
 
 To produce this:

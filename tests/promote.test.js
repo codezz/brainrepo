@@ -7,7 +7,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const promote = require('../scripts/promote');
-const { TYPES, FRESHNESS, DEFAULT_THRESHOLDS } = require('../scripts/schema');
+const { TYPES, FRESHNESS, DEFAULT_THRESHOLDS, BOOTSTRAP_THRESHOLDS } = require('../scripts/schema');
 
 function freshBrain() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'remember-promote-'));
@@ -239,4 +239,136 @@ test('run: auto_promote=false skips writes even without dry-run', () => {
 
   fs.rmSync(brain, { recursive: true, force: true });
   fs.rmSync(stateDir, { recursive: true, force: true });
+});
+
+// Bootstrap thresholds — relaxed for cold-start brains.
+
+test('effectiveThresholds: applies bootstrap when beliefs < bootstrap_max_beliefs', () => {
+  const config = { thresholds: { ...DEFAULT_THRESHOLDS } };
+  const result = promote.effectiveThresholds(5, config);
+  assert.equal(result.bootstrap, true);
+  assert.equal(result.thresholds.promotion_confidence, BOOTSTRAP_THRESHOLDS.promotion_confidence);
+  assert.equal(result.thresholds.promotion_sources, BOOTSTRAP_THRESHOLDS.promotion_sources);
+  // Other fields untouched
+  assert.equal(result.thresholds.top_beliefs_n, DEFAULT_THRESHOLDS.top_beliefs_n);
+  assert.equal(result.thresholds.stale_days, DEFAULT_THRESHOLDS.stale_days);
+});
+
+test('effectiveThresholds: skips bootstrap once brain is mature', () => {
+  const config = { thresholds: { ...DEFAULT_THRESHOLDS } };
+  const result = promote.effectiveThresholds(BOOTSTRAP_THRESHOLDS.bootstrap_max_beliefs, config);
+  assert.equal(result.bootstrap, false);
+  assert.equal(result.thresholds.promotion_confidence, DEFAULT_THRESHOLDS.promotion_confidence);
+  assert.equal(result.thresholds.promotion_sources, DEFAULT_THRESHOLDS.promotion_sources);
+});
+
+test('effectiveThresholds: respects user-set thresholds when more permissive than bootstrap', () => {
+  const config = {
+    thresholds: { ...DEFAULT_THRESHOLDS, promotion_confidence: 0.5, promotion_sources: 1 },
+  };
+  const result = promote.effectiveThresholds(5, config);
+  assert.equal(result.bootstrap, true);
+  // User's 0.5 wins over bootstrap's 0.7 (more permissive)
+  assert.equal(result.thresholds.promotion_confidence, 0.5);
+  assert.equal(result.thresholds.promotion_sources, 1);
+});
+
+test('effectiveThresholds: bootstrap=false in config disables relaxation', () => {
+  const config = {
+    thresholds: { ...DEFAULT_THRESHOLDS },
+    bootstrap: false,
+  };
+  const result = promote.effectiveThresholds(0, config);
+  assert.equal(result.bootstrap, false);
+  assert.equal(result.thresholds.promotion_confidence, DEFAULT_THRESHOLDS.promotion_confidence);
+  assert.equal(result.thresholds.promotion_sources, DEFAULT_THRESHOLDS.promotion_sources);
+});
+
+test('run: bootstrap promotes a single-source 0.8 belief from the very first capture', () => {
+  const brain = freshBrain();
+  // Realistic first explicit `remember this:` capture — one source.
+  writeBelief(brain, 'pref-postgres', {
+    type: TYPES.BELIEF,
+    confidence: 0.8,
+    sources_count: 1,
+    freshness: FRESHNESS.STABLE,
+  });
+  writePersona(brain, '# Persona\n\n## Top Beliefs\n\n_None yet_\n');
+
+  const result = promote.run({
+    brain,
+    configOverride: { thresholds: DEFAULT_THRESHOLDS, auto_promote: true },
+  });
+
+  assert.equal(result.bootstrap, true);
+  assert.equal(result.top.length, 1, 'first explicit capture should be promotable under bootstrap');
+
+  const persona = fs.readFileSync(path.join(brain, 'Persona.md'), 'utf-8');
+  assert.match(persona, /pref-postgres/);
+
+  fs.rmSync(brain, { recursive: true, force: true });
+});
+
+test('run: bootstrap promotes a 2-source 0.75 belief that defaults would skip', () => {
+  const brain = freshBrain();
+  // Just below default threshold (5 sources × 0.85), but eligible under bootstrap
+  writeBelief(brain, 'pref-async', {
+    type: TYPES.BELIEF,
+    confidence: 0.75,
+    sources_count: 2,
+    freshness: FRESHNESS.STABLE,
+  });
+  writePersona(brain, '# Persona\n\n## Top Beliefs\n\n_None yet_\n');
+
+  const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'remember-promote-bootstrap-'));
+  const logPath = path.join(stateDir, 'evolution.log');
+
+  const result = promote.run({
+    brain,
+    logPath,
+    configOverride: {
+      thresholds: DEFAULT_THRESHOLDS,
+      auto_promote: true,
+    },
+  });
+
+  assert.equal(result.bootstrap, true);
+  assert.equal(result.top.length, 1, 'belief should be promoted under bootstrap thresholds');
+  assert.equal(result.top[0].path, 'Notes/pref-async.md');
+
+  const persona = fs.readFileSync(path.join(brain, 'Persona.md'), 'utf-8');
+  assert.match(persona, /pref-async/);
+
+  // Log entry tagged with [bootstrap]
+  const log = fs.readFileSync(logPath, 'utf-8');
+  assert.match(log, /\[bootstrap\]/);
+
+  fs.rmSync(brain, { recursive: true, force: true });
+  fs.rmSync(stateDir, { recursive: true, force: true });
+});
+
+test('run: empty placeholder shows current thresholds + count when nothing qualifies', () => {
+  const brain = freshBrain();
+  // Below even bootstrap thresholds
+  writeBelief(brain, 'tentative', {
+    type: TYPES.BELIEF,
+    confidence: 0.4,
+    sources_count: 1,
+    freshness: FRESHNESS.STABLE,
+  });
+  writePersona(brain, '# Persona\n\n## Top Beliefs\n\n_None yet_\n');
+
+  promote.run({
+    brain,
+    configOverride: { thresholds: DEFAULT_THRESHOLDS, auto_promote: true },
+  });
+
+  const persona = fs.readFileSync(path.join(brain, 'Persona.md'), 'utf-8');
+  // Bootstrap mode message includes effective thresholds and brain size
+  assert.match(persona, /conf≥0\.7/);
+  assert.match(persona, /sources≥1/);
+  assert.match(persona, /1 belief\(s\)/);
+  assert.match(persona, /bootstrap mode/);
+
+  fs.rmSync(brain, { recursive: true, force: true });
 });

@@ -107,13 +107,39 @@ Before creating a new `Notes/<slug>.md`, check for an existing similar belief/wo
 node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js find-similar {brain} <slug> <belief|world-fact>
 ```
 
-If a match is returned, append evidence to the existing file instead of creating a duplicate:
+**No match** → create new (Step 4a).
 
-```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js append <filepath> '{"source":"Journal/<SESSION_DATE>.md","quote":"<verbatim>","date":"<SESSION_DATE>"}'
-```
+**Match returned** → run the polarity check below before deciding which command to use.
 
-Increments `sources_count`, appends evidence, updates `updated:`. Idempotent on duplicate sources.
+### 4b.7: Polarity check (only when 4b.6 found a match)
+
+Read the existing file (body + `evidence:`). Decide which of three branches applies:
+
+1. **Same direction (re-affirms existing claim)** → append positive evidence:
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js append <filepath> '{"source":"Journal/<SESSION_DATE>.md","quote":"<verbatim>","date":"<SESSION_DATE>"}'
+   ```
+   Increments `sources_count`, appends to `evidence:`, refuses duplicate sources.
+
+2. **Opposite direction (contradicts existing claim)** → append counter-evidence + log:
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js append-counter <filepath> '{"source":"Journal/<SESSION_DATE>.md","quote":"<verbatim>","date":"<SESSION_DATE>"}'
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/evolution-log.js CONTRADICT "<filepath> counter from Journal/<SESSION_DATE>.md"
+   ```
+   Appends to `counter_evidence:`, leaves `sources_count` alone, auto-flips `freshness: contradicted` when counter entries exceed positive ones.
+
+3. **Unrelated (fuzzy match was wrong)** → ignore the find-similar match and create a new note via Step 4a.
+
+#### Polarity rules — first match wins
+
+- Explicit negation of the existing claim → counter
+- Reversal of preference (existing: *X over Y*; new: *Y over X*) → counter
+- Same subject, opposite verdict → counter
+- Restatement, paraphrase, new instance → positive
+- Adjacent topic, neither confirms nor contradicts → ignore (create new)
+- Not at least 80% confident the polarity is opposite → default to positive. Don't guess "counter" — false contradictions corrupt the brain faster than missed ones.
+
+In bulk processing, mention the polarity decision in the per-session report so the user can spot mistakes (e.g. *"3 positive, 1 contradicted (Notes/pref-postgres.md)"*).
 
 ### 4c. Update Existing Files (Edit Tool)
 
@@ -135,13 +161,25 @@ Check REMEMBER.md `## Templates` first, then fall back to `reference.md` templat
 
 Analyze session for: user corrections, stated preferences, repeated workflows, communication style, decision criteria, code style. Read current Persona.md first. Add evidence with `[{SESSION_DATE}]` prefix. Skip if no clear patterns.
 
-## Step 5: Mark Processed & Report
+## Step 5: Mark Processed
 
 ```bash
 node ${CLAUDE_PLUGIN_ROOT}/scripts/extract.js --source <source> --mark-processed <session_id>
 ```
 
-Report: list created files, updated files (note if append-only), skipped files, session dates, remaining unprocessed count. See `reference.md` for report template.
+## Step 6: Auto-promote (once per batch)
+
+After all sessions in this batch have been processed, run promote.js a single time so `Persona.md ## Top Beliefs` reflects everything that just landed:
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/promote.js
+```
+
+Bulk extraction often pushes many beliefs over the threshold at once — surface the deltas (promoted/demoted) in the report below.
+
+## Step 7: Report
+
+Report: list created files, updated files (note if append-only), skipped files, session dates, remaining unprocessed count, **and** the auto-promote delta (promoted/demoted Top Beliefs). See `reference.md` for report template.
 
 ## Error Handling
 

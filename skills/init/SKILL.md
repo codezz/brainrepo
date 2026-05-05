@@ -68,15 +68,14 @@ Otherwise, ask:
 2. **What's your timezone?** (default: UTC)
 3. **What languages do you speak?** (default: English)
 
-Create `{brain_path}/Persona.md` using the template in `reference.md`. The template ships with five sections:
+Create `{brain_path}/Persona.md` using the template in `reference.md`. The template ships with four sections:
 
 - `## Mission` — identity (Name/Timezone/Languages/Role)
-- `## Directives` — hard rules (user-edited)
-- `## Disposition` — soft traits, auto-updated later by `/remember:evolve` (Phase 2)
-- `## Top Beliefs` — auto-managed by `/remember:evolve` (Phase 3); empty until first run
+- `## Directives` — hard rules (user-edited; plugin never overwrites)
+- `## Top Beliefs` — auto-managed by `promote.js` (runs after every capture); empty until your first belief meets the threshold
 - `## Evidence Log` — append-only behavioural evidence
 
-The user fills `## Mission` and `## Directives`. The other three are populated automatically as the brain learns.
+The user fills `## Mission` and `## Directives`. The other two are populated automatically as the brain learns.
 
 ### 4b. Create REMEMBER.md (if it doesn't exist)
 
