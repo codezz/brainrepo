@@ -91,6 +91,8 @@ This skill MUST emit `type:` in the frontmatter of every newly created L2 file. 
 
 This skill does NOT trigger consolidation, reflection, or promotion. Those are the responsibility of `/remember:evolve` (Phase 2).
 
+A `PostToolUse` hook auto-runs `validateAndUpgrade()` after every Write/Edit and back-fills any missing schema fields. Surface its warnings (e.g. *"confidence defaulted to 0.5 — review"*) to the user. Emit complete frontmatter on first write to minimise hook activity.
+
 ### 4c. Update Existing Files (Edit Tool)
 
 Use `Edit` for surgical updates. Do NOT rewrite whole files.

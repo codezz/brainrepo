@@ -21,6 +21,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/post_write.js",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }

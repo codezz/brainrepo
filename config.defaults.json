@@ -1,5 +1,5 @@
 {
-  "version": "2.2.0",
+  "version": "2.2.1",
   "session": {
     "brain_dump_keywords": ["save this", "remember this", "brain dump", "note to self", "capture this", "save to brain", "write to brain", "add to brain", "salvează", "notează", "reține"],
     "load_persona": true

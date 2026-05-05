@@ -47,6 +47,41 @@ If you depend on the previous routing (decisions in `Notes/`, all project conten
 - PROJECT-SPECIFIC → Projects/<project>/<project>.md (## Tasks)
 ```
 
+## [2.2.1] - 2026-05-05
+
+Self-healing schema. Every brain file write now passes through a validator that adds missing schema fields and Persona sections automatically.
+
+### Added
+
+- **`scripts/schema.js validateAndUpgrade(filepath, opts)`** — reads a brain file, infers expected schema from its path, back-fills missing frontmatter fields (or Persona sections), writes if changed. Returns `{changed, addedFields, addedSections, warnings}`. Idempotent.
+- **`scripts/schema.js inferExpectedSchema(filepath, opts)`** — pure helper mapping path → expected shape. Powers the validator.
+- **`scripts/post_write.js`** — `PostToolUse` hook handler invoked by Claude Code after every `Write` / `Edit`. Calls `validateAndUpgrade` if the file is inside `$REMEMBER_BRAIN_PATH`; outside the brain it's a silent no-op. Surfaces additions and warnings as `additionalContext`.
+- **`hooks/hooks.json`** — new `PostToolUse` matcher on `Write|Edit` registering the post-write handler. 5s timeout.
+- **CLI:** `node scripts/schema.js validate <path>` for ad-hoc invocation.
+- 19 new tests in `tests/schema-validate-upgrade.test.js`. Total now 64 / 0 fail.
+
+### Schema rules per path
+
+| Path | Expected | Defaults added |
+|---|---|---|
+| `Notes/<x>.md` | `world-fact` (or `belief` if explicit) | `type`, `freshness=stable`, `sources_count=1` |
+| `Notes/<x>.md` with `type: belief` and no `confidence` | — | `confidence=0.5` + warning to user for review |
+| `People/<x>.md` | `observation` | `type`, `last_consolidated`, `sources_count`, `freshness` |
+| `Areas/<x>.md` | `observation` | same as People |
+| `Projects/<x>/<x>.md` | `observation` | same as People |
+| `Projects/<x>/decisions/*.md`, `meetings/*.md` | `world-fact` | `type`, `freshness`, `sources_count` |
+| `Journal/<YYYY-MM-DD>.md` | `experience` | `type` |
+| `Persona.md` | required sections present | empty placeholders for `Mission`, `Directives`, `Disposition`, `Top Beliefs`, `Evidence Log` |
+| `Inbox/`, `Tasks/`, anything else | passthrough | — |
+
+### Skills updated
+
+- `remember`, `process`, `evolve` — `## Schema rules` / equivalent sections now reference the post-write hook so the LLM knows the safety net is in place and surfaces hook warnings to the user.
+
+### Why
+
+User raised the principle: every file update should self-verify schema/sections rather than relying on manual one-shot migrations. Now lives in code: the migration script that backfilled 132 legacy files (commit `04b9c2f` in second-brain) is the last hand-rolled migration — future schema additions become lazy upgrades on touch.
+
 ## [2.2.0] - 2026-05-04
 
 Three-Layer Memory release: turns Remember from a capture/process tool into a self-evolving brain. Schema foundation + new `/remember:evolve` skill + deterministic helpers that keep cron costs at zero.

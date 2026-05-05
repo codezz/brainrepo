@@ -140,3 +140,9 @@ See `reference.md` for detailed templates and routing tables.
 - For `type: belief`, `confidence: 0.0–1.0` is REQUIRED.
 - `freshness: stable` is the default for new captures. The `evolve` skill (Phase 2) updates this later.
 - Never overwrite L2 files. Append evidence; if a contradiction emerges, write to `counter_evidence` (the `evolve` skill handles this in Phase 2 — for live capture, just append normally).
+
+## Auto-upgrade
+
+A `PostToolUse` hook runs `scripts/post_write.js` after every Write/Edit on a brain file. It calls `validateAndUpgrade()` from `scripts/schema.js` and fills in any missing schema fields or Persona sections automatically. You will see an `additionalContext` block from the hook saying e.g. *"auto-upgraded Notes/x.md — schema fields added: freshness, sources_count"*. When you see warnings (e.g. *"confidence defaulted to 0.5 — review"*), surface them to the user so they can refine.
+
+You don't need to manually call the validator — the hook is the safety net. But emit complete frontmatter on first write whenever possible to avoid post-write fixups.

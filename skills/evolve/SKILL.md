@@ -13,6 +13,8 @@ Single weekly/monthly entry point that runs three phases internally:
 
 Cron-able via `/loop 7d /remember:evolve`. Idempotent.
 
+A `PostToolUse` hook auto-validates schema on every Write/Edit, so any frontmatter you touch during the run is back-filled automatically. Surface its warnings (e.g. *"confidence defaulted to 0.5 — review"*) in your final report.
+
 ---
 
 ## Flags (parsed from user input)
