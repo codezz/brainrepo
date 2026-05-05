@@ -99,6 +99,22 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/schema.js validate <filepath>
 
 Output `{changed, addedFields, addedSections, warnings}`. Surface any `warnings` in the final report. Skip on Inbox/Tasks/Archive (validator returns passthrough). Aim to emit complete frontmatter on first write so the validator is a no-op.
 
+### 4b.6: Dedup check for beliefs/world-facts
+
+Before creating a new `Notes/<slug>.md`, check for an existing similar belief/world-fact:
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js find-similar {brain} <slug> <belief|world-fact>
+```
+
+If a match is returned, append evidence to the existing file instead of creating a duplicate:
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js append <filepath> '{"source":"Journal/<SESSION_DATE>.md","quote":"<verbatim>","date":"<SESSION_DATE>"}'
+```
+
+Increments `sources_count`, appends evidence, updates `updated:`. Idempotent on duplicate sources.
+
 ### 4c. Update Existing Files (Edit Tool)
 
 Use `Edit` for surgical updates. Do NOT rewrite whole files.

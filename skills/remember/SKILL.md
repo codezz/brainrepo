@@ -87,6 +87,30 @@ Resolve every name/reference against the knowledge index:
 
 **Fuzzy matching:** "John", "john smith", "John S." → `People/john-smith.md` if exists.
 
+### Step 3.5: Dedup check (before any new belief/world-fact write)
+
+Before creating a new `Notes/<slug>.md` for a belief or world-fact, check if a similar one already exists:
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js find-similar {brain} <slug> belief
+```
+
+Or for world-fact: pass `world-fact` as the type filter.
+
+If a similar file is returned, append evidence instead of creating a duplicate:
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/append-evidence.js append <filepath> '{"source":"Journal/<TODAY>.md","quote":"<verbatim>","date":"<TODAY>"}'
+```
+
+This:
+- increments `sources_count`
+- appends the new entry to the `evidence:` array
+- updates `updated:` to today
+- refuses duplicate sources (idempotent)
+
+If no similar file → proceed to Step 4 (Write new).
+
 ### Step 4: Route & Write
 
 For **existing files** → use `Edit` tool (surgical updates, not rewrites).
