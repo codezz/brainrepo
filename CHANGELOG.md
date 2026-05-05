@@ -47,6 +47,36 @@ If you depend on the previous routing (decisions in `Notes/`, all project conten
 - PROJECT-SPECIFIC → Projects/<project>/<project>.md (## Tasks)
 ```
 
+## [2.3.0] - 2026-05-05
+
+Dedup + OpenClaw parity. Same-day patches that move v2.2.x from "schema is in place" to "schema actually grows over time."
+
+### Added — Dedup
+
+- **`scripts/append-evidence.js`** — `appendEvidence(filepath, entry)` and `findSimilarBelief(brain, slug)`. When a similar belief or world-fact already exists, the skill appends evidence to it (incrementing `sources_count`, updating `updated:`, refusing duplicate sources) instead of creating a new file. Closes the gap that prevented Top Beliefs from ever being promoted: every capture before this PR landed at `sources_count: 1`.
+- CLI: `node scripts/append-evidence.js append|find-similar`.
+- 7 new tests, total now 71 / 0 fail.
+
+### Added — Skill instructions
+
+- `remember/SKILL.md` Step 3.5: Dedup check before any new belief/world-fact write.
+- `process/SKILL.md` Step 4b.6: Same.
+
+### Added — OpenClaw agent tools
+
+`index.js` registers four new tools alongside the existing `remember_brain_dump_context` and `remember_brain_index`:
+
+- `remember_promote` — runs evolve Phase 3 deterministically (no LLM cost). Cron-safe.
+- `remember_validate` — runs `validateAndUpgrade` on a single file. Useful when an agent writes outside standard skill paths.
+- `remember_append_evidence` — dedup-aware append with `source` / `quote` / `date` params.
+- `remember_find_similar_belief` — returns the absolute path of an existing similar file or `(none)`.
+
+OpenClaw's `session_start` hint now mentions `/remember:evolve` alongside the existing commands.
+
+### Docs
+
+- `docs/MIGRATING.md` — full migration guide for v2.0.x and v2.1.x users (Path A lazy / Path B `/remember:process` / Path C one-shot backfill script).
+
 ## [2.2.2] - 2026-05-05
 
 Drop the `PostToolUse` hook from v2.2.1 — after deployment we judged it added complexity without unique coverage. Skills already write through `Write`/`Edit`, so calling the validator explicitly from the skill prompt is simpler, more visible, and easier to debug.
