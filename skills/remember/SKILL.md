@@ -141,8 +141,18 @@ See `reference.md` for detailed templates and routing tables.
 - `freshness: stable` is the default for new captures. The `evolve` skill (Phase 2) updates this later.
 - Never overwrite L2 files. Append evidence; if a contradiction emerges, write to `counter_evidence` (the `evolve` skill handles this in Phase 2 — for live capture, just append normally).
 
-## Auto-upgrade
+## Validate after write
 
-A `PostToolUse` hook runs `scripts/post_write.js` after every Write/Edit on a brain file. It calls `validateAndUpgrade()` from `scripts/schema.js` and fills in any missing schema fields or Persona sections automatically. You will see an `additionalContext` block from the hook saying e.g. *"auto-upgraded Notes/x.md — schema fields added: freshness, sources_count"*. When you see warnings (e.g. *"confidence defaulted to 0.5 — review"*), surface them to the user so they can refine.
+After every `Write` or `Edit` on a brain file (Notes/, People/, Projects/, Areas/, Journal/, or Persona.md), run the validator:
 
-You don't need to manually call the validator — the hook is the safety net. But emit complete frontmatter on first write whenever possible to avoid post-write fixups.
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/schema.js validate <filepath>
+```
+
+The output is JSON: `{changed, addedFields, addedSections, warnings}`.
+
+- If `changed: true`, the file was upgraded with missing schema fields/sections — note this in your final report.
+- If `warnings` contains items (e.g. *"confidence defaulted to 0.5 — review"*), surface them in your final response so the user can refine the value.
+- If `changed: false` and no warnings, your write was already complete — nothing else to do.
+
+Aim to emit complete frontmatter on first write so the validator is a no-op. Skip validation for files outside the brain (Inbox/, Tasks/, Archive/, Templates/) — the validator returns passthrough anyway, but you can save the call.

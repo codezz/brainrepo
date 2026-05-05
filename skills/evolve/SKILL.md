@@ -13,7 +13,7 @@ Single weekly/monthly entry point that runs three phases internally:
 
 Cron-able via `/loop 7d /remember:evolve`. Idempotent.
 
-A `PostToolUse` hook auto-validates schema on every Write/Edit, so any frontmatter you touch during the run is back-filled automatically. Surface its warnings (e.g. *"confidence defaulted to 0.5 — review"*) in your final report.
+After each Phase that writes (Phase 1 entity re-synthesis, Phase 2 belief frontmatter updates, Phase 3 Persona.md update via `promote.js`), call `node ${CLAUDE_PLUGIN_ROOT}/scripts/schema.js validate <filepath>` on the touched files. Surface its `warnings` (e.g. *"confidence defaulted to 0.5 — review"*) in your final report.
 
 ---
 

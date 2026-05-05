@@ -91,7 +91,13 @@ This skill MUST emit `type:` in the frontmatter of every newly created L2 file. 
 
 This skill does NOT trigger consolidation, reflection, or promotion. Those are the responsibility of `/remember:evolve` (Phase 2).
 
-A `PostToolUse` hook auto-runs `validateAndUpgrade()` after every Write/Edit and back-fills any missing schema fields. Surface its warnings (e.g. *"confidence defaulted to 0.5 — review"*) to the user. Emit complete frontmatter on first write to minimise hook activity.
+After every Write/Edit on a brain file in this skill (steps 4c/4d), run:
+
+```bash
+node ${CLAUDE_PLUGIN_ROOT}/scripts/schema.js validate <filepath>
+```
+
+Output `{changed, addedFields, addedSections, warnings}`. Surface any `warnings` in the final report. Skip on Inbox/Tasks/Archive (validator returns passthrough). Aim to emit complete frontmatter on first write so the validator is a no-op.
 
 ### 4c. Update Existing Files (Edit Tool)
 

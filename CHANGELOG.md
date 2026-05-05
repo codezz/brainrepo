@@ -47,6 +47,28 @@ If you depend on the previous routing (decisions in `Notes/`, all project conten
 - PROJECT-SPECIFIC → Projects/<project>/<project>.md (## Tasks)
 ```
 
+## [2.2.2] - 2026-05-05
+
+Drop the `PostToolUse` hook from v2.2.1 — after deployment we judged it added complexity without unique coverage. Skills already write through `Write`/`Edit`, so calling the validator explicitly from the skill prompt is simpler, more visible, and easier to debug.
+
+### Removed
+
+- `scripts/post_write.js` (was the hook handler).
+- `PostToolUse` matcher in `hooks/hooks.json`.
+
+### Changed
+
+- `remember`, `process`, `evolve` skills now have an explicit "validate after write" step: `node ${CLAUDE_PLUGIN_ROOT}/scripts/schema.js validate <path>` after every brain Write/Edit. Output JSON `{changed, addedFields, addedSections, warnings}` is surfaced to the user when warnings exist.
+
+### Kept
+
+- `validateAndUpgrade()` and `inferExpectedSchema()` in `scripts/schema.js` — the validator library is still useful as both a callable from skills and a CLI utility.
+- All 64 tests still pass (validator coverage unchanged).
+
+### Why
+
+Hook ran only on Claude-Code-driven `Write`/`Edit`, not on Obsidian/git/external edits — same coverage as a skill-driven call, with extra invisible plumbing. Pragmatic over perfect.
+
 ## [2.2.1] - 2026-05-05
 
 Self-healing schema. Every brain file write now passes through a validator that adds missing schema fields and Persona sections automatically.
