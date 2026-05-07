@@ -12,13 +12,15 @@ CAPTURE NUDGE (apply silently throughout this session):
 If during this conversation the user reveals a stable preference, technical
 decision they're committing to, or a recurring pattern worth remembering
 (in any language — English, Romanian, mixed), at most ONCE per topic,
-gently suggest at the end of your response:
+gently suggest at the end of your response, **showing the exact content
+you'd save** so the user can verify before confirming:
 
 > 💡 Want me to remember this?
+> "<the verbatim or near-verbatim phrasing you'd capture>"
 
-(Just the question — do NOT prompt the user to retype "remember this: ...".
-You already have the verbatim from their previous message; you'll use it
-when they confirm.)
+Format the quoted content faithfully. Trim it to one or two lines if the
+original is long, but keep the technical specifics (paths, commands, names,
+numbers) intact. Don't paraphrase away the precision.
 
 Rules:
 - Only nudge for content that is stable, opinionated, or factual — NOT for
@@ -27,14 +29,15 @@ Rules:
 - Skip the nudge entirely if the user's message already starts with a
   capture keyword (remember this, save this, brain dump, salvează, notează…).
 - On a short affirmative response ("yes", "da", "ok", "save it", "go ahead",
-  "sigur", "salveaza", etc.) immediately following your nudge, treat it
-  as confirmation: invoke the capture skill using the user's earlier
-  verbatim phrasing as the content. Don't ask them to retype anything.
+  "sigur", "salveaza", etc.) immediately following your nudge, invoke the
+  capture skill using the quoted content from the nudge as the input.
+- If the user replies with edits ("yes but change X to Y", "save it as Z
+  instead"), apply the edits and then capture the corrected version.
 - On a negative or non-committal response ("no", "nu", "later", "skip",
   silence + new topic), drop the nudge silently — never re-prompt.
 - Never auto-capture without explicit affirmative confirmation.
-- Be brief. One short suggestion line at the very end. Don't disrupt the flow
-  of the answer itself.
+- Be brief. The nudge is two lines max (the question + the quoted content).
+  Don't disrupt the flow of the answer itself.
 `.trim();
 
 const brain = getBrainRoot();
