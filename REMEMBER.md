@@ -10,7 +10,8 @@ Default rules used by the Remember plugin to route knowledge captures. The plugi
 - Project work / log entry → `Projects/<project>/<project>.md` (## Log section)
 - Project quick capture pending review → `Projects/<project>/inbox.md` (append)
 - Sub-project item (`Projects/<x>/projects/<y>/`) → write to the **parent** project KB with a `[<sub>]` tag in the filename or first line
-- Technical learning / atomic note → `Notes/<topic>.md`
+- Technical learning **specific to one project** (its architecture, internals, config, gotchas) → `Projects/<project>/notes/<topic>.md`
+- Technical learning **cross-cutting or general** (applies to multiple projects, or generic developer knowledge) → `Notes/<topic>.md`
 - Cross-project lesson or pattern → `Resources/lessons/<topic>.md` or `Resources/patterns/<topic>.md`
 - Daily log / cross-project decisions → `Journal/{{TODAY}}.md`
 - Area (career/health/family/finances) → `Areas/<area>.md`

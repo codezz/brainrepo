@@ -190,11 +190,15 @@ If the auto-promote step skipped writing (e.g. `auto_promote: false` in user's c
 | Task without deadline | `Tasks/tasks.md` (Next Up) |
 | Future/roadmap task | `Projects/{name}/{name}.md` |
 | Project update | `Projects/{name}/{name}.md` |
-| Decision | `Notes/decision-{topic}.md` |
-| Learning/insight | `Notes/{topic}.md` |
+| Decision (project-scoped) | `Projects/{name}/decisions/YYYY-MM-DD-{topic}.md` |
+| Decision (cross-project) | `Notes/decision-{topic}.md` |
+| **Project-specific learning** (architecture, internals, gotchas of one project) | `Projects/{name}/notes/{topic}.md` |
+| **Cross-cutting / general learning** (applies to many projects or generic) | `Notes/{topic}.md` |
 | Area update | `Areas/{area}.md` |
 | URL/resource | `Resources/{type}/{title}.md` |
 | Unclear | `Inbox/{topic}.md` |
+
+**Rule of thumb for technical notes:** if the title makes sense only when you know which project it's about (e.g. "stratus5-container-architecture" → makes sense only inside `staxwp`), it belongs in `Projects/{name}/notes/`. If the title stands alone as generic developer knowledge ("n8n-workflow-patterns", "cloudflare-bypass-curl-cffi"), it belongs in `Notes/`.
 
 ## File Naming
 

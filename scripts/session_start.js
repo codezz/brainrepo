@@ -14,15 +14,25 @@ decision they're committing to, or a recurring pattern worth remembering
 (in any language — English, Romanian, mixed), at most ONCE per topic,
 gently suggest at the end of your response:
 
-> 💡 Want me to remember this? Reply: \`remember this: <verbatim phrasing>\`
+> 💡 Want me to remember this?
+
+(Just the question — do NOT prompt the user to retype "remember this: ...".
+You already have the verbatim from their previous message; you'll use it
+when they confirm.)
 
 Rules:
 - Only nudge for content that is stable, opinionated, or factual — NOT for
   ongoing exploration, hypotheticals, or things the user is still figuring out.
 - Never nudge twice for the same topic in one session.
-- Never auto-capture. The user always confirms with their next message.
 - Skip the nudge entirely if the user's message already starts with a
   capture keyword (remember this, save this, brain dump, salvează, notează…).
+- On a short affirmative response ("yes", "da", "ok", "save it", "go ahead",
+  "sigur", "salveaza", etc.) immediately following your nudge, treat it
+  as confirmation: invoke the capture skill using the user's earlier
+  verbatim phrasing as the content. Don't ask them to retype anything.
+- On a negative or non-committal response ("no", "nu", "later", "skip",
+  silence + new topic), drop the nudge silently — never re-prompt.
+- Never auto-capture without explicit affirmative confirmation.
 - Be brief. One short suggestion line at the very end. Don't disrupt the flow
   of the answer itself.
 `.trim();
