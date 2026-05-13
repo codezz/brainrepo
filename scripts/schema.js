@@ -182,7 +182,9 @@ function inferExpectedSchema(filepath, { brainRoot } = {}) {
   }
 
   // Projects/<x>/<y>.md
-  const projMatch = rel.match(new RegExp(`^Projects\\${path.sep}([^${path.sep}]+)\\${path.sep}(.+)$`));
+  // path.sep on Windows is '\', which is invalid unescaped inside a RegExp character class.
+  const sep = path.sep.replace(/\\/g, '\\\\');
+  const projMatch = rel.match(new RegExp(`^Projects${sep}([^${sep}]+)${sep}(.+)$`));
   if (projMatch) {
     const projName = projMatch[1];
     const subPath = projMatch[2];
