@@ -26,3 +26,7 @@ Thumbs.db
 *.tmp
 *.log
 .claude/settings.local.json
+
+
+# Claude Code plugin runtime locks
+.in_use/
