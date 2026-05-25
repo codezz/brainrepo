@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-05-25
+
+Patch: clarify `/remember:init` Step 6 — the brain's `Templates/` folder is exclusively for note-level templates (`note.md`, `person.md`, `project.md`, `daily.md`, `resource.md`). The plugin's `assets/templates/remember.md` is the source for the brain's ROOT `REMEMBER.md` rulebook (handled in Step 4b) and must never be copied into `Templates/`. SKILL.md now spells out the explicit list and an explicit guard so re-runs of init can't drift.
+
 ## [2.5.0] - 2026-05-25
 
 Integration release. `/remember:init` now auto-configures the [`@remember-md/mcp`](https://github.com/remember-md/mcp) MCP server so the `search_brain` tool is available across Claude Code, OpenClaw, Cursor, Codex CLI, and any other MCP client — zero manual config required.

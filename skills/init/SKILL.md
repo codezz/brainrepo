@@ -89,9 +89,19 @@ Read the template from `assets/templates/remember.md` (relative to plugin root) 
 
 Create `{brain_path}/Tasks/tasks.md` — see `reference.md` for template.
 
-### 6. Create Templates
+### 6. Create Note Templates
 
-Create `Templates/project.md` and `Templates/person.md` — see `reference.md` for content.
+Copy these files from `${CLAUDE_PLUGIN_ROOT}/assets/templates/` to `{brain_path}/Templates/`, skipping any that already exist:
+
+- `note.md`
+- `person.md`
+- `project.md`
+- `daily.md`
+- `resource.md`
+
+**Do NOT copy `assets/templates/remember.md`** to `Templates/`. That template is the source for the brain's ROOT `REMEMBER.md` rulebook — already handled in Step 4b. The brain's `Templates/` folder is exclusively for **note-level templates** that the `remember`/`process` skills use when creating new individual files; the root `REMEMBER.md` is a separate, single-purpose configuration file at brain root.
+
+See `reference.md` for the body of each template.
 
 ### 7. Initialize Git (Optional)
 
