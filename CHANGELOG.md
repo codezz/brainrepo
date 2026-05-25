@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-05-25
+
+Integration release. `/remember:init` now auto-configures the [`@remember-md/mcp`](https://github.com/remember-md/mcp) MCP server so the `search_brain` tool is available across Claude Code, OpenClaw, Cursor, Codex CLI, and any other MCP client — zero manual config required.
+
+### Added — Auto-configure MCP server in `/remember:init`
+
+- **`scripts/setup_mcp.js`** — new helper that patches the appropriate Claude Code MCP config file (user-level `~/.claude.json` or project-level `./.mcp.json`) with a `mcpServers.remember` entry pointing at `npx -y @remember-md/mcp`. Idempotent — re-running with the same args is a no-op. Preserves any existing `mcpServers` entries and unrelated config keys.
+- **Auto-scope detection** — brain inside the current working directory → project scope (writes `./.mcp.json` with relative `REMEMBER_BRAIN_PATH`); brain outside → user scope (writes `~/.claude.json` with absolute path). Project-scope relative paths are portable across machines.
+- **`skills/init/SKILL.md` Step 8** — new step calls `setup_mcp.js` after structure creation, with an option to skip (and print a copy-pasteable JSON snippet) for users who prefer manual config.
+- **`skills/init/reference.md`** — full JSON snippets for user-scope and project-scope MCP entries, plus cross-tool config notes (Cursor, Codex, ChatGPT custom GPTs, Claude.ai web), version pinning, and global install path.
+- **`.gitignore` template** — `.remember/` added so users don't accidentally commit the SQLite index that the MCP server keeps inside their brain folder.
+- 16 new tests in `tests/setup_mcp.test.js` covering: scope classification, config-path resolution, user/project entry shape, idempotency (no mtime change on re-run), merge with existing config, env update on brain path change, empty/malformed config handling.
+
+### What this unlocks
+
+After `/remember:init` (one-time), every MCP-capable AI tool can call the `search_brain` tool to do hybrid BM25 + vector + 1-hop wikilink retrieval over your markdown brain. Restart Claude Code (or whichever client) after init to discover the new tool.
+
+The MCP server (`@remember-md/mcp`) is shipped via `npx` — no install step, no native compilation, no toolchain. First invocation downloads `Xenova/bge-micro-v2` (~17 MB) in the background; BM25 results are available from query 1 (lexical-first hybrid).
+
 ## [2.4.0] - 2026-05-05
 
 UX-first release. Closes the gaps the v2.3 product review surfaced: empty Top Beliefs for new users, false promises in the Persona template, contradictions detected but never routed, and a confusing "you must run cron" mental model.
