@@ -118,4 +118,84 @@ tags: [person]
 ```
 .DS_Store
 .tmp/
+.remember/
+```
+
+The `.remember/` line is important — that's where `@remember-md/mcp` keeps its derived index (`.remember/index.db`). It must stay out of git: it's machine-specific and fully rebuildable from the markdown source.
+
+---
+
+## MCP Server Setup
+
+### Auto-detection rule
+
+```
+function classifyScope(brainPath, cwd):
+  if brainPath is inside cwd → 'project'
+  else                       → 'user'
+```
+
+Use `node ${CLAUDE_PLUGIN_ROOT}/scripts/setup_mcp.js` to patch the config — it handles JSON merge, idempotency, and writes the right relative/absolute path based on scope.
+
+### User-scope (~/.claude.json) snippet
+
+```json
+{
+  "mcpServers": {
+    "remember": {
+      "command": "npx",
+      "args": ["-y", "@remember-md/mcp"],
+      "env": {
+        "REMEMBER_BRAIN_PATH": "/Users/gabi/second-brain"
+      }
+    }
+  }
+}
+```
+
+### Project-scope (.mcp.json in project root) snippet
+
+```json
+{
+  "mcpServers": {
+    "remember": {
+      "command": "npx",
+      "args": ["-y", "@remember-md/mcp"],
+      "env": {
+        "REMEMBER_BRAIN_PATH": "./project-brain"
+      }
+    }
+  }
+}
+```
+
+Project-scope paths are stored relative to the project root for portability — when another teammate (or your other machine) checks out the project, the relative path resolves correctly regardless of absolute filesystem location.
+
+### Cross-tool config
+
+The same `mcpServers.remember` entry works in:
+- `~/.claude.json` — Claude Code user level
+- `.mcp.json` at project root — Claude Code project level (overrides user level for that project)
+- `.cursor/mcp.json` — Cursor IDE
+- Any other MCP-capable client (Codex CLI, ChatGPT custom GPTs, Claude.ai web via MCP bridge, etc.)
+
+### Pinning a version
+
+For reproducibility, pin the version explicitly:
+
+```json
+"args": ["-y", "@remember-md/mcp@0.1.0"]
+```
+
+Without the version, `npx` resolves to the `latest` dist-tag.
+
+### Disabling auto-update
+
+The MCP server is updated transparently — `npx -y` always uses cached or latest. To stay on a fixed version across upgrades, either pin (above) or install globally:
+
+```bash
+npm install -g @remember-md/mcp
+# then change config to:
+"command": "remember-mcp",
+"args": []
 ```
