@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-05-25
+
+Adds the `/remember:ask` skill — natural-language Q&A on the brain. Closes the loop on `@remember-md/mcp` v0.1.4: users can now type `/remember:ask <question>` instead of having to know about the MCP `search_brain` tool directly.
+
+### Added
+
+- **`skills/ask/SKILL.md`** — wraps `mcp__remember__search_brain` with query reformulation, multi-call retry, and citation-rich synthesis.
+  - Reformulates the user's natural-language question into a 3–7 word topical search phrase that matches how the brain is actually written (English for tech notes, Romanian for personal/strategic).
+  - Strips stopwords and question words; keeps nouns + concepts + names.
+  - Retries with alternative phrasing (up to 3 search calls total) when the first result is weak (top score < 0.020).
+  - Synthesizes an answer in the user's language with `[[wikilink]]` citations using the exact paths returned by the tool.
+  - Honest "not found" handling — no hallucination, suggests `remember this: ...` capture if appropriate.
+  - Skips the tool call entirely when the question is answered by Persona content already in session context.
+- SessionStart hint now includes `/remember:ask` alongside the other commands so the AI knows it's available.
+- README Commands table updated to document `/remember:ask`.
+
+### Prerequisite reminder
+
+This skill requires the `@remember-md/mcp` server to be reachable in the MCP client. `/remember:init` (since v2.5.0) auto-configures it; existing installs can run `setup_mcp.js` directly or re-run `/remember:init`. After config, restart the MCP client (Claude Code, Cursor, etc.) so the new server is discovered.
+
 ## [2.5.1] - 2026-05-25
 
 Patch: clarify `/remember:init` Step 6 — the brain's `Templates/` folder is exclusively for note-level templates (`note.md`, `person.md`, `project.md`, `daily.md`, `resource.md`). The plugin's `assets/templates/remember.md` is the source for the brain's ROOT `REMEMBER.md` rulebook (handled in Step 4b) and must never be copied into `Templates/`. SKILL.md now spells out the explicit list and an explicit guard so re-runs of init can't drift.

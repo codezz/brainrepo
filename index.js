@@ -33,7 +33,7 @@ const plugin = {
   id: 'remember',
   name: 'Remember',
   description: 'Portable knowledge base — one brain, every AI tool. Extract decisions, people, and insights from your AI sessions into organized local markdown.',
-  version: '2.5.1',
+  version: '2.6.0',
 
   configSchema: {
     type: 'object',
@@ -77,7 +77,7 @@ const plugin = {
         prependContext:
           `# REMEMBER BRAIN LOADED\nBrain: ${brain}\n\n` +
           `## PERSONA\n${persona}\n\n` +
-          `Commands: /remember:process, /remember:status, /remember:evolve, 'remember this: ...'`,
+          `Commands: /remember:ask, /remember:process, /remember:status, /remember:evolve, 'remember this: ...'`,
       };
     });
 

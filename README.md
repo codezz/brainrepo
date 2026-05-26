@@ -75,8 +75,9 @@ Plugin state (audit log, thresholds) lives at `~/.local/state/remember/` — out
 
 | Command | What it does |
 |---------|-------------|
-| `/remember:init` | Initialize your second brain structure (run once) |
+| `/remember:init` | Initialize your second brain structure + auto-configure MCP search (run once) |
 | `remember this: ...` | Instant capture — routes to the right place automatically |
+| `/remember:ask <question>` | Ask the brain. AI reformulates as an optimal search query, calls the MCP `search_brain` tool, and answers with citations. Requires the `@remember-md/mcp` server (auto-configured by `/remember:init`). |
 | `/remember:status` | Show brain stats — file counts, freshness, top beliefs |
 | `/remember:process` | Optional. Extract knowledge from past AI sessions into your brain |
 | `/remember:evolve` | Periodic (weekly recommended). LLM-driven brain evolution — entity profile synthesis, belief confidence re-scoring, stale detection. Schedule via `/loop 7d /remember:evolve` |
